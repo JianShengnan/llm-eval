@@ -1,0 +1,10 @@
+# geval 运行时依赖：无。
+#
+# 整个评测框架仅使用 Python 标准库（urllib / concurrent.futures / random / math / json …），
+# 目的是让内网 ARM64 离线机器「拷目录即可运行」，不涉及 pip、不涉及 ARM64 wheel 可用性。
+#
+# 唯一例外是联网机器上的数据集准备脚本，它需要 datasets：
+#   pip install datasets      # 仅 scripts/prepare_datasets.py 需要，只在这台机器上装
+#
+# 校验方式（内网机器上执行，应当输出「零第三方依赖」）：
+#   python scripts/verify_deps.py

@@ -1,0 +1,91 @@
+digraph geval_dataflow {
+    rankdir=LR
+    fontname="Helvetica"
+    node [fontname="Helvetica", fontsize=11, style=filled]
+    edge [fontname="Helvetica", fontsize=9]
+    label="geval Data Flow: Config to Report"
+    labelloc=t
+    fontsize=13
+    bgcolor="#FAFAFA"
+    pad=0.3
+    nodesep=0.6
+    ranksep=0.8
+
+    // Stage 1: Input
+    subgraph cluster_input {
+        label="1. Input"
+        style=filled
+        color="#E8F5E9"
+        
+        config [label="config.json\n(models, tasks,\nreport settings)", shape=note, fillcolor="#C8E6C9"]
+        jsonl  [label="datasets/*.jsonl\n(questions, answers,\nsubjects)", shape=note, fillcolor="#C8E6C9"]
+        schema [label="schema.json\n(intent/slot enums)", shape=note, fillcolor="#C8E6C9"]
+    }
+
+    // Stage 2: Prepare
+    subgraph cluster_prepare {
+        label="2. Prepare"
+        style=filled
+        color="#E3F2FD"
+        
+        load    [label="datasets.py\nLoad & normalize", shape=box, fillcolor="#BBDEFB"]
+        sample  [label="Stratified\nsampling\n(--limit)", shape=box, fillcolor="#BBDEFB"]
+        prompt  [label="prompts.py\nApply protocol\n(direct/fewshot/\nanswer_line)", shape=box, fillcolor="#BBDEFB"]
+    }
+
+    // Stage 3: Execute
+    subgraph cluster_execute {
+        label="3. Execute"
+        style=filled
+        color="#FFF3E0"
+        
+        dispatch [label="runner.py\nConcurrent\ndispatch", shape=box, fillcolor="#FFE0B2"]
+        client   [label="client.py\nHTTP request\n+ retry + cache", shape=box, fillcolor="#FFE0B2"]
+        models   [label="5 Model\nEndpoints", shape=doubleoctagon, fillcolor="#FFCC80"]
+    }
+
+    // Stage 4: Extract & Score
+    subgraph cluster_score {
+        label="4. Extract & Score"
+        style=filled
+        color="#FCE4EC"
+        
+        extract [label="answers.py\nParse response\n(strip CoT,\nextract answer)", shape=box, fillcolor="#F8BBD0"]
+        score   [label="metrics.py\nAccuracy\nWilson CI\nMcNemar test", shape=box, fillcolor="#F8BBD0"]
+        ifeval_score [label="ifeval.py\n24 instruction\nchecks", shape=box, fillcolor="#F8BBD0"]
+    }
+
+    // Stage 5: Report
+    subgraph cluster_report {
+        label="5. Output"
+        style=filled
+        color="#F3E5F5"
+        
+        persist [label="runs/<name>/\nmanifest.json\ndetails.jsonl\nsummary.json", shape=note, fillcolor="#E1BEE7"]
+        html    [label="report.html\n(Self-contained\ninline SVG)", shape=note, fillcolor="#E1BEE7"]
+        md      [label="report.md", shape=note, fillcolor="#E1BEE7"]
+    }
+
+    // Edges
+    config -> load
+    jsonl -> load
+    schema -> load [style=dashed, label="json_schema only"]
+    
+    load -> sample
+    sample -> prompt
+    
+    prompt -> dispatch
+    dispatch -> client
+    client -> models [label="OpenAI-compat\nAPI calls"]
+    
+    models -> client [label="responses", dir=back, style=dashed]
+    client -> extract
+    
+    extract -> score
+    extract -> ifeval_score
+    
+    score -> persist
+    ifeval_score -> persist
+    persist -> html
+    persist -> md
+}

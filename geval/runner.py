@@ -1,0 +1,391 @@
+"""评测编排：模型 × 任务的并发执行、断点续跑、结果落盘与复现指纹。
+
+落盘结构：
+  runs/<run_name>/
+    manifest.json              本次运行的完整环境与配置指纹
+    config.json                生效配置快照
+    <model>/<task>.jsonl       逐样本明细（可中断续跑、可逐条复核）
+    <model>/<task>.summary.json 任务级聚合
+    summary.json               模型 × 任务总表
+    report.md / report.html    报告
+"""
+
+from __future__ import annotations
+
+import concurrent.futures as futures
+import os
+import platform
+import sys
+import threading
+import time
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+from . import __version__
+from . import tasks as tk
+from .client import build_client
+from .metrics import aggregate
+from .util import JsonlWriter, Progress, ensure_dir, jdump, now_iso, read_jsonl, write_json
+
+
+# --------------------------------------------------------------------------- #
+@dataclass
+class RunSpec:
+    cfg: Dict[str, Any]
+    run_dir: str
+    run_name: str
+    concurrency: int = 8
+    resume: bool = False
+    limit_override: Optional[int] = None
+    task_filter: Optional[List[str]] = None
+    model_filter: Optional[List[str]] = None
+    allow_synthetic: bool = False
+    quiet: bool = False
+    cache_dir: Optional[str] = None
+
+
+def make_run_spec(cfg: Dict[str, Any], **kw: Any) -> RunSpec:
+    out_dir = str(cfg.get("output_dir") or "runs")
+    run_name = str(kw.pop("run_name", None) or cfg.get("run_name") or time.strftime("geval-%Y%m%d-%H%M%S"))
+    run_dir = ensure_dir(os.path.join(out_dir, run_name))
+    return RunSpec(
+        cfg=cfg,
+        run_dir=run_dir,
+        run_name=run_name,
+        concurrency=int(cfg.get("concurrency") or 8),
+        cache_dir=cfg.get("cache_dir"),
+        **kw,
+    )
+
+
+# --------------------------------------------------------------------------- #
+class Runner:
+    def __init__(self, spec: RunSpec) -> None:
+        self.spec = spec
+        self.cfg = spec.cfg
+        self.summary: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        self.model_labels: Dict[str, str] = {}
+        self.task_summaries: Dict[str, Dict[str, Any]] = {}
+        self.manifests: Dict[str, Dict[str, Any]] = {}
+        self.errors: List[str] = []
+        self._lock = threading.Lock()
+
+    # ------------------------------------------------------------------ #
+    def _models(self) -> List[Dict[str, Any]]:
+        models = list(self.cfg.get("models") or [])
+        if not models:
+            raise ValueError("配置中 models 为空；请参考 config.example.json")
+        if self.spec.model_filter:
+            wanted = set(self.spec.model_filter)
+            models = [m for m in models if str(m.get("id")) in wanted]
+            missing = wanted - {str(m.get("id")) for m in models}
+            if missing:
+                raise ValueError(f"配置中不存在这些模型 id：{sorted(missing)}")
+        return models
+
+    def _tasks(self) -> List[Dict[str, Any]]:
+        specs = list(self.cfg.get("tasks") or [])
+        if not specs:
+            raise ValueError("配置中 tasks 为空；至少指定一个任务")
+        if self.spec.task_filter:
+            wanted = set(self.spec.task_filter)
+            specs = [t for t in specs if str(t.get("name")) in wanted]
+            if not specs:
+                return [{"name": n} for n in self.spec.task_filter]
+        for t in specs:
+            if self.spec.limit_override:
+                t["limit"] = int(self.spec.limit_override)
+        return specs
+
+    # ------------------------------------------------------------------ #
+    def run(self) -> Dict[str, Any]:
+        data_root = str(self.cfg.get("data_root") or "datasets")
+        models = self._models()
+        task_specs = self._tasks()
+
+        self._write_manifest(models, task_specs, data_root)
+
+        for mcfg in models:
+            mid = str(mcfg["id"])
+            self.model_labels[mid] = str(mcfg.get("label") or mid)
+            client = build_client(
+                mcfg,
+                cache_dir=_sub(self.spec.cache_dir, mid) if self.spec.cache_dir else None,
+                timeout=float(self.cfg.get("request_timeout_s") or 180),
+                retries=int(self.cfg.get("retries") or 3),
+                proxy=str(self.cfg.get("proxy") or "bypass"),
+            )
+            self.summary.setdefault(mid, {})
+            for tspec in task_specs:
+                task_name = str(tspec.get("name"))
+                task_key = str(tspec.get("tag") or task_name)
+                try:
+                    agg = self._run_task(client, mcfg, task_name, task_key, tspec, data_root)
+                    self.summary[mid][task_key] = agg
+                except Exception as exc:  # noqa: BLE001
+                    msg = f"{mid}/{task_key} 执行失败：{type(exc).__name__}: {exc}"
+                    self.errors.append(msg)
+                    print(f"[error] {msg}", file=sys.stderr)
+                    self.summary[mid][task_key] = {"n": 0, "score": None, "error": str(exc)}
+
+            stats = client.stats()
+            with self._lock:
+                self.manifests.setdefault("client_stats", {})[mid] = stats
+
+        self._write_summary()
+        return {
+            "run_dir": self.spec.run_dir,
+            "run_name": self.spec.run_name,
+            "summary": self.summary,
+            "errors": self.errors,
+        }
+
+    # ------------------------------------------------------------------ #
+    def _run_task(
+        self,
+        client: Any,
+        mcfg: Dict[str, Any],
+        task_name: str,
+        task_key: str,
+        tspec: Dict[str, Any],
+        data_root: str,
+    ) -> Dict[str, Any]:
+        tspec = dict(tspec)
+        tspec["_quiet"] = self.spec.quiet
+        task = tk.get_task(task_name, tspec)
+        records, examples = task.prepare(
+            data_root,
+            allow_synthetic=self.spec.allow_synthetic,
+            synthetic_n=int(self.cfg.get("synthetic_n") or 60),
+        )
+        if not records:
+            raise ValueError("评测集为空")
+
+        items = [task.build(r, examples) for r in records]
+        out_path = os.path.join(self.spec.run_dir, str(mcfg["id"]), f"{task_key}.jsonl")
+        done_ids = _done_ids(out_path) if self.spec.resume else set()
+        todo = [it for it in items if str(it.record.get("id")) not in done_ids]
+
+        if not self.spec.quiet:
+            note = f"（续跑：跳过已完成 {len(items) - len(todo)} 条）" if done_ids else ""
+            print(
+                f"[{self.model_labels[str(mcfg['id'])]} × {task_key}] "
+                f"样本 {len(records)} 条，协议 {task.protocol}，模式 {task.mode}{note}",
+                file=sys.stderr,
+            )
+
+        # mock 客户端需要旁路注入标准答案
+        if hasattr(client, "register"):
+            for it in items:
+                client.register(it.prompt_key, it.mock_entry)
+
+        scored: List[Dict[str, Any]] = []
+        if done_ids:
+            for row in read_jsonl(out_path):
+                scored.append(row)
+
+        if todo:
+            writer = JsonlWriter(out_path, append=bool(done_ids))
+            progress = (
+                None if self.spec.quiet else Progress(len(todo), label=f"{mcfg['id']}/{task_key}", every=max(1, len(todo) // 20))
+            )
+            try:
+                with futures.ThreadPoolExecutor(max_workers=max(1, self.spec.concurrency)) as pool:
+                    future_map = {pool.submit(task.run_one, it, client): it for it in todo}
+                    for fut in futures.as_completed(future_map):
+                        item = future_map[fut]
+                        try:
+                            row = fut.result()
+                        except Exception as exc:  # noqa: BLE001
+                            row = task._row(item, client)
+                            row["error"] = f"{type(exc).__name__}: {exc}"
+                            with self._lock:
+                                self.errors.append(f"{mcfg['id']}/{task_name}/{item.record.get('id')}: {row['error']}")
+                        with self._lock:
+                            scored.append(row)
+                        writer.write(row)
+                        if progress:
+                            progress.tick()
+            finally:
+                writer.close()
+                if progress:
+                    progress.finish()
+
+        agg = aggregate(
+            scored,
+            bootstrap=int((self.cfg.get("report") or {}).get("bootstrap") or 2000),
+            alpha=float((self.cfg.get("report") or {}).get("alpha") or 0.05),
+            seed=int(self.cfg.get("seed") or 42),
+        )
+        agg["task"] = task_key
+        agg["task_name"] = task_name
+        agg["model"] = str(mcfg["id"])
+        agg["model_label"] = self.model_labels[str(mcfg["id"])]
+        agg["kind"] = task.kind
+        agg["protocol"] = task.protocol
+        agg["mode"] = task.mode
+        # 记下来供报告做「可比性守卫」：两个模型的这几项不一致时，配对差值不可信
+        agg["num_fewshot"] = len(examples)
+        agg["dataset_source"] = task.manifest.get("source")
+        extra = task.summarize(scored)
+        if extra:
+            agg["task_metrics"] = extra
+        agg["breakdown"] = _breakdown(scored, task_key)
+        agg["examples_failed"] = _examples(scored, want_correct=False, n=5)
+        agg["examples_passed"] = _examples(scored, want_correct=True, n=3)
+        agg["parse_note"] = _parse_note(scored)
+
+        write_json(os.path.join(self.spec.run_dir, str(mcfg["id"]), f"{task_key}.summary.json"), agg)
+
+        with self._lock:
+            self.task_summaries.setdefault(task_key, {})[str(mcfg["id"])] = agg
+            self.manifests.setdefault("datasets", {})[task_key] = task.manifest
+        return agg
+
+    # ------------------------------------------------------------------ #
+    def _write_manifest(self, models, task_specs, data_root) -> None:
+        manifest = {
+            "geval_version": __version__,
+            "run_name": self.spec.run_name,
+            "created_at": now_iso(),
+            "python": sys.version.split()[0],
+            "platform": platform.platform(),
+            "machine": platform.machine(),
+            "data_root": os.path.abspath(data_root),
+            "concurrency": self.spec.concurrency,
+            "seed": self.cfg.get("seed"),
+            "proxy": self.cfg.get("proxy") or "bypass",
+            "limit_override": self.spec.limit_override,
+            "models": [{k: v for k, v in m.items() if k != "api_key"} for m in models],
+            "tasks": task_specs,
+        }
+        write_json(os.path.join(self.spec.run_dir, "manifest.json"), manifest)
+        write_json(os.path.join(self.spec.run_dir, "config.json"), self.cfg)
+
+    def _write_summary(self) -> None:
+        payload = {
+            "run_name": self.spec.run_name,
+            "generated_at": now_iso(),
+            "model_labels": self.model_labels,
+            "results": self.summary,
+            "task_summaries": self.task_summaries,
+            "manifests": self.manifests,
+            "errors": self.errors,
+        }
+        write_json(os.path.join(self.spec.run_dir, "summary.json"), payload)
+
+
+# --------------------------------------------------------------------------- #
+def _done_ids(path: str) -> set:
+    if not os.path.exists(path):
+        return set()
+    ids = set()
+    try:
+        for row in read_jsonl(path):
+            if row.get("id") is not None:
+                ids.add(str(row["id"]))
+    except (OSError, ValueError):
+        return set()
+    return ids
+
+
+def _sub(root: Optional[str], name: str) -> str:
+    return os.path.join(str(root), name) if root else ""
+
+
+def _breakdown(scored: Sequence[Dict[str, Any]], task_name: str) -> List[Dict[str, Any]]:
+    """按 subject 分组统计；分组过多时只保留样本量前 20 组，避免报告爆表。"""
+    buckets: Dict[str, List[Dict[str, Any]]] = {}
+    for row in scored:
+        g = str(row.get("subject") or "unknown")
+        buckets.setdefault(g, []).append(row)
+    out = []
+    for g, rows in sorted(buckets.items(), key=lambda kv: -len(kv[1]))[:20]:
+        ok = sum(1 for r in rows if r.get("correct"))
+        pf = sum(1 for r in rows if r.get("parse_ok") is False)
+        out.append({"subject": g, "n": len(rows), "score": ok / len(rows), "parse_fail": pf})
+    return out
+
+
+def _examples(scored: Sequence[Dict[str, Any]], *, want_correct: bool, n: int) -> List[Dict[str, Any]]:
+    """抽取错例/正例，供人工快速判断是模型问题还是抽取问题。"""
+    picks = []
+    for row in scored:
+        if bool(row.get("correct")) != want_correct:
+            continue
+        if row.get("error"):
+            continue
+        picks.append(
+            {
+                "id": row.get("id"),
+                "subject": row.get("subject"),
+                "gold": row.get("gold"),
+                "pred": row.get("pred"),
+                "strategy": row.get("strategy"),
+                "parse_ok": row.get("parse_ok"),
+                "response": (row.get("response") or "")[:600],
+            }
+        )
+        if len(picks) >= n:
+            break
+    return picks
+
+
+def _parse_note(scored: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    n = len(scored)
+    if not n:
+        return {}
+    pf = [r for r in scored if r.get("parse_ok") is False and not r.get("error")]
+    return {
+        "n": n,
+        "parse_fail": len(pf),
+        "parse_fail_rate": len(pf) / n,
+        "strategies": _strategy_histogram(scored),
+        "hint": (
+            "解析失败率偏高时，优先检查 prompt 协议与抽取规则，而不是模型能力"
+            if len(pf) / n > 0.02
+            else "解析失败率正常"
+        ),
+    }
+
+
+def _strategy_histogram(scored: Sequence[Dict[str, Any]]) -> Dict[str, int]:
+    hist: Dict[str, int] = {}
+    for row in scored:
+        s = str(row.get("strategy") or "none")
+        hist[s] = hist.get(s, 0) + 1
+    return dict(sorted(hist.items(), key=lambda kv: -kv[1]))
+
+
+# --------------------------------------------------------------------------- #
+def probe_models(cfg: Dict[str, Any], *, timeout: float = 20.0) -> List[Dict[str, Any]]:
+    """快速探活：对每个模型端点发一条最小请求，确认服务、模型名与鉴权是否可用。"""
+    results: List[Dict[str, Any]] = []
+    for mcfg in cfg.get("models") or []:
+        mid = str(mcfg.get("id"))
+        rec: Dict[str, Any] = {"id": mid, "label": mcfg.get("label") or mid, "base_url": mcfg.get("base_url")}
+        if str(mcfg.get("provider") or "").lower() == "mock":
+            rec.update({"ok": True, "note": "mock 模型无需网络"})
+            results.append(rec)
+            continue
+        try:
+            client = build_client(
+                mcfg,
+                timeout=timeout,
+                retries=0,
+                proxy=str(cfg.get("proxy") or "bypass"),
+            )
+            reply = client.chat([{"role": "user", "content": "回复一个字：好"}], max_tokens=8)
+            rec.update(
+                {
+                    "ok": reply.ok,
+                    "latency_ms": round(reply.latency_ms, 1),
+                    "sample": (reply.text or "").strip()[:40],
+                    "service_model": (reply.raw or {}).get("model"),
+                    "error": reply.error,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            rec.update({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
+        results.append(rec)
+    return results

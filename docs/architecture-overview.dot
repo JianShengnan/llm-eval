@@ -1,0 +1,134 @@
+digraph geval_architecture {
+    rankdir=TB
+    fontname="Helvetica"
+    node [fontname="Helvetica", fontsize=11, style=filled]
+    edge [fontname="Helvetica", fontsize=9]
+    label="geval - LLM General Capability Evaluation Framework\nArchitecture Overview (L2-L3)"
+    labelloc=t
+    fontsize=14
+    bgcolor="#FAFAFA"
+    pad=0.4
+
+    // ---- External Actors & Systems ----
+    subgraph cluster_external {
+        label="External Systems"
+        style=dashed
+        color="#999999"
+        fontcolor="#666666"
+
+        operator [label="Operator\n(You)", shape=ellipse, fillcolor="#E8F5E9"]
+        
+        subgraph cluster_models {
+            label="Model Endpoints (OpenAI-compatible API)"
+            style=dashed
+            color="#BBDEFB"
+            
+            pangu7b_pre  [label="Pangu7B\n(pre-SFT)", fillcolor="#E3F2FD"]
+            pangu7b_post [label="Pangu7B\n(post-SFT)", fillcolor="#E3F2FD"]
+            qwen8b_pre   [label="Qwen8B\n(pre-SFT)", fillcolor="#E3F2FD"]
+            qwen8b_post  [label="Qwen8B\n(post-SFT)", fillcolor="#E3F2FD"]
+            qwen3_32b    [label="Qwen3-32B\n(Production Baseline)", fillcolor="#BBDEFB"]
+        }
+    }
+
+    // ---- geval Framework (System Boundary) ----
+    subgraph cluster_geval {
+        label="geval Framework (Python 3.9+, Zero 3rd-party Dependencies)"
+        style=bold
+        color="#1565C0"
+        fontcolor="#1565C0"
+
+        // CLI Layer
+        subgraph cluster_cli {
+            label="CLI Layer"
+            style=filled
+            color="#FFF3E0"
+            cli [label="__main__.py\nselftest | list-tasks | preview\nprobe | run | report", shape=box, fillcolor="#FFE0B2"]
+        }
+
+        // Orchestration Layer
+        subgraph cluster_orchestration {
+            label="Orchestration Layer"
+            style=filled
+            color="#E8EAF6"
+            
+            runner [label="runner.py\nConcurrent execution\nCheckpoint resume\nReproducibility fingerprint", shape=box, fillcolor="#C5CAE9"]
+            tasks  [label="tasks.py\nTask Registry\nMCQ | Numerical | Short-answer\nJSON | IFEval", shape=box, fillcolor="#C5CAE9"]
+        }
+
+        // Processing Pipeline
+        subgraph cluster_pipeline {
+            label="Processing Pipeline"
+            style=filled
+            color="#E0F2F1"
+            
+            datasets [label="datasets.py\nMulti-format normalization\nDedup & stratified sampling", shape=box, fillcolor="#B2DFDB"]
+            prompts  [label="prompts.py\n3 protocols: direct | answer_line | fewshot\nPer-task templates", shape=box, fillcolor="#B2DFDB"]
+            client   [label="client.py\nOpenAI-compat client\nConcurrency-safe, retry, disk cache\nlogprobs support", shape=box, fillcolor="#B2DFDB"]
+            answers  [label="answers.py\nAnswer extraction\nOptions | Numbers | JSON\nCoT stripping", shape=box, fillcolor="#B2DFDB"]
+        }
+
+        // Analysis & Output Layer
+        subgraph cluster_output {
+            label="Analysis & Output Layer"
+            style=filled
+            color="#FCE4EC"
+            
+            metrics [label="metrics.py\nAccuracy, Wilson/Bootstrap CI\nMcNemar test, Latency percentiles", shape=box, fillcolor="#F8BBD0"]
+            ifeval  [label="ifeval.py\n24 rule-based\ninstruction checkers", shape=box, fillcolor="#F8BBD0"]
+            report  [label="report.py\nMarkdown + Self-contained HTML\nInline SVG charts", shape=box, fillcolor="#F8BBD0"]
+            mock    [label="mock.py\nDeterministic mock\n(offline self-test)", shape=box, fillcolor="#F8BBD0"]
+        }
+
+        // Transport
+        http [label="http.py\nurllib transport\nProxy strategy, backoff retry", shape=box, fillcolor="#D1C4E9"]
+    }
+
+    // ---- Data Artifacts ----
+    subgraph cluster_data {
+        label="Data Artifacts"
+        style=dashed
+        color="#795548"
+        fontcolor="#795548"
+
+        config_json  [label="config.json\nModel defs, tasks, report settings", shape=note, fillcolor="#FFF9C4"]
+        jsonl_data   [label="datasets/*.jsonl\nBenchmark & business data", shape=note, fillcolor="#FFF9C4"]
+        schema_json  [label="schema.json\nIntent & slot enumerations", shape=note, fillcolor="#FFF9C4"]
+        run_output   [label="runs/<name>/\nmanifest | details | summary\nreport.html | report.md", shape=note, fillcolor="#FFF9C4"]
+    }
+
+    // ---- Edges: Operator ----
+    operator -> cli [label="invokes"]
+    operator -> config_json [label="configures"]
+
+    // ---- Edges: CLI to internals ----
+    cli -> runner [label="run/probe"]
+    cli -> report [label="report"]
+    cli -> mock [label="selftest"]
+    cli -> tasks [label="list/preview"]
+
+    // ---- Edges: Orchestration ----
+    runner -> datasets [label="load & sample"]
+    runner -> tasks [label="resolve task"]
+    runner -> client [label="dispatch requests"]
+    runner -> run_output [label="write results"]
+
+    // ---- Edges: Pipeline ----
+    datasets -> jsonl_data [label="reads", style=dashed]
+    datasets -> prompts [label="feed samples"]
+    prompts -> client [label="formatted prompts"]
+    client -> http [label="urllib"]
+    http -> cluster_models [label="HTTP POST\n/v1/chat/completions"]
+
+    // ---- Edges: Post-processing ----
+    client -> answers [label="raw responses"]
+    answers -> metrics [label="extracted answers"]
+    tasks -> ifeval [label="instruction checks"]
+    metrics -> report [label="statistics"]
+    ifeval -> report [label="pass rates"]
+    report -> run_output [label="generate"]
+
+    // ---- Edges: Config ----
+    config_json -> runner [label="controls"]
+    schema_json -> tasks [label="constrains\njson_schema task"]
+}

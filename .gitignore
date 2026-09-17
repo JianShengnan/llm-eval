@@ -1,0 +1,32 @@
+# 运行产物与缓存不入库
+runs/
+.cache/
+
+# 交付工件：通过文件传输拷进内网，不是源码，不入库（体积大）
+wheels/
+dist/
+
+# 真实配置含模型地址与鉴权信息，只提交模板
+config.json
+
+__pycache__/
+*.pyc
+*.pyo
+# 虚拟环境：建议建在项目内（如 python3 -m venv venv）。
+# 若你用了自定义名字，请把该目录名也加进来。
+.venv/
+venv/
+env/
+evalenv/
+lmenv/
+myevalenv/
+
+# 数据集通常体积大且含业务信息，按需决定是否入库
+# datasets/*/*.jsonl
+datasets/**/*.jsonl
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

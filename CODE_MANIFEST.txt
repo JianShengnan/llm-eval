@@ -1,0 +1,39 @@
+# 框架源码与文档清单（不含 wheel）
+# 生成时间：2026-09-16 20:46:52
+# 打包模式：仅源码（不含 datasets/ 与 wheels/）
+# 列：sha256  大小(字节)  类别  相对路径
+#   类别 code/script 为框架本体，内网必须与本清单一致；
+#        doc 为文档与配置模板，建议同步但不影响运行；
+#        data 为数据集，可能是你自己准备的，不做判定。
+# 用法（内网机、项目根目录）：python3 scripts/verify_install.py
+
+c4270a9672cb2f224719d2871358aec162deee653b8f7edf0f2fb3107091f582        600  doc      .gitignore
+d40d37d811621bb6677128128994950db01a189b4edaffb1f90505662d38565b      18497  doc      README.md
+cd6196846035fc1d08835759bfd795bf4a98da76593a74b27a6471fd15e48cdd       3895  doc      config.example.json
+f7d2b0603c712496bb08dd224ddf8279c71e388afc4e560b33463edca31c0c4a       1849  doc      config.smoke.json
+1d1a2fdadc29e219eae55ebd0097983ad26e18389fcc63c2f94142779121028b       9626  doc      docs/COVERAGE.md
+2e1929843f228b423dc53f2f223467adfbc44db0c114160d462fe8b4a8d43b06      19001  doc      docs/EVAL_METHODOLOGY.md
+1a132235fb49fa427227e60173421972d2cef7b1a3f67a7b691c5c88938860c4      29522  doc      docs/INTRANET_RUNBOOK.md
+b920f4109961507665b593b6ee683ffe2f91003154c89e097cb6f5822930570a      14171  doc      docs/OFFLINE_DEPLOY.md
+363a0af963f417ae7cf69f758b95b259ae0cff833b896ef39c7fc644d69a1c36        767  code     geval/__init__.py
+fe944eb5d400c856563adeb94e5c6b361fcf7324cbe0d33fe5d3706dec6ad2bb      47378  code     geval/__main__.py
+bb7b6bffe31b37ce503f9e465646b50a5eb2a4bc3c19f2de9dc82267abc9c570      11174  code     geval/answers.py
+e37be46f3dc72775433c72942463a85a0ec6a8427c1afadce52a4bcfb8856c2d      20791  code     geval/client.py
+2e7b8fb4d9486719530eb3772af93888dbf3ab57f10375598611853de775870a      20558  code     geval/datasets.py
+bd591173b516addd2f6b9a17a5d9e84fba4909f170b30597d27e9ffd5f849c69       6839  code     geval/http.py
+5f1d579dbbb9ce542241025c635c5c0bce34e837ffc435515264480f7b58d2eb      10936  code     geval/ifeval.py
+97151a587a6204e71245ae059ed44ced45df2db021d175f0626d2edb0c329044      10524  code     geval/metrics.py
+1932a55003a9036ea51eeb633cefc879c8eda14d1de5c92612740aa213335d45      14872  code     geval/mock.py
+85966f64256b6d1f0490939738d2882365465a99c245504e92034c9168966b4e      13941  code     geval/prompts.py
+466cdae70e644f84b703b790fae149bd09e790fe6a422e5eab63f15221e9e6f8      49389  code     geval/report.py
+bf8f80f8514a387bb33b851cda51e8ee0c55d0b0d1405f51f731f81449f4df96      15653  code     geval/runner.py
+86bf5e0599f0a7f3027ea801ab6cca0b30ad0ee6a65438a36803e92cfa2d4c3f      28263  code     geval/tasks.py
+4a9fb4f7ccef2e38f75b759f4135f87a45cbcf8694a925f50669c8ea89d5a08a       7519  code     geval/util.py
+883a794a3482737a3d8c8a9e3850505dced5d8ccfc2986bfd1cbef96c0ade990        566  doc      requirements.txt
+fc174fa20fa8b489abd207a35a3c47d80acc0011d786439d6500803ef61474d9      12448  script   scripts/download_wheels.sh
+f108dff2b969b0d57f40fc6ab0cd77a99809fa15319a668f4acabe3ddc8d536e       8252  script   scripts/install_offline.sh
+0face9e3b017945768abbf66a1f027e0c2f031366deedc7c1c3a9f3eb766bf2e       9722  script   scripts/pack_bundle.py
+6f5763815603b451bf23c2b545d64ddc62ca84022779884f66fcd63cbe1861b1       9832  script   scripts/prepare_datasets.py
+e322f54df9911b2afeb629b90ac27c19dcc25639a16799903c99a8f361e99cfd       3578  script   scripts/run_stage1.sh
+f631a916e8c0b63ea3d5ff97b224e17b5edf699c9806c534707f86b190e5a298       3355  script   scripts/verify_deps.py
+02d23b913b2142fe8ba454c24a1a35e811605a0db467ead74c1af1d1c4b43424       8657  script   scripts/verify_install.py

@@ -1,0 +1,35 @@
+{
+  "_说明": "干跑配置：5 个 mock 模型 + 内置合成数据，验证整条链路与「微调影响评估」章节，不连接任何真实服务。用法：python -m geval run --config config.smoke.json --smoke",
+  "_模拟设定": "post 模型的 accuracy 略低于 pre，用于模拟灾难性遗忘，验证报告能否正确判定「显著退化」。",
+  "run_name": "smoke",
+  "output_dir": "runs",
+  "data_root": "datasets",
+  "seed": 42,
+  "concurrency": 8,
+  "proxy": "bypass",
+  "report": {
+    "bootstrap": 400,
+    "baseline": "qwen3-32b",
+    "pairs": [
+      ["pangu7b-pre", "pangu7b-post"],
+      ["qwen8b-pre", "qwen8b-post"]
+    ]
+  },
+  "models": [
+    { "id": "pangu7b-pre", "label": "盘古7B（微调前）", "provider": "mock", "accuracy": 0.78, "noise": 0.18, "latency_ms": 520 },
+    { "id": "pangu7b-post", "label": "盘古7B（微调后）", "provider": "mock", "accuracy": 0.52, "noise": 0.22, "latency_ms": 520 },
+    { "id": "qwen8b-pre", "label": "Qwen8B（微调前）", "provider": "mock", "accuracy": 0.74, "noise": 0.15, "latency_ms": 600 },
+    { "id": "qwen8b-post", "label": "Qwen8B（微调后）", "provider": "mock", "accuracy": 0.63, "noise": 0.13, "latency_ms": 600 },
+    { "id": "qwen3-32b", "label": "Qwen3-32B（现网基线）", "provider": "mock", "accuracy": 0.88, "noise": 0.10, "latency_ms": 1500 }
+  ],
+  "tasks": [
+    { "name": "ceval", "tag": "ceval-fewshot", "protocol": "fewshot", "mode": "gen" },
+    { "name": "ceval", "tag": "ceval-direct", "protocol": "direct", "mode": "gen" },
+    { "name": "ceval", "tag": "ceval-logprob", "protocol": "fewshot", "mode": "logprob" },
+    { "name": "ceval", "tag": "ceval-likelihood", "mode": "loglikelihood", "primary": "acc_norm" },
+    { "name": "gsm8k" },
+    { "name": "bbh" },
+    { "name": "ifeval" },
+    { "name": "json_schema" }
+  ]
+}

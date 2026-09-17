@@ -1,0 +1,35 @@
+{
+  "intent_labels": [
+    "查询余额",
+    "转账",
+    "修改密码",
+    "挂失银行卡",
+    "查询交易明细",
+    "申请贷款",
+    "信用卡还款",
+    "网点查询"
+  ],
+  "slot_names": [
+    "account",
+    "amount",
+    "card",
+    "date_range",
+    "term"
+  ],
+  "schema": {
+    "type": "object",
+    "required": ["intent", "slots"],
+    "additionalProperties": false,
+    "properties": {
+      "intent": {
+        "type": "string",
+        "description": "意图标签，必须严格等于 intent_labels 中的一个值"
+      },
+      "slots": {
+        "type": "object",
+        "description": "槽位键值对；键必须来自 slot_names，无对应槽位时输出空对象 {}",
+        "additionalProperties": true
+      }
+    }
+  }
+}
