@@ -570,6 +570,10 @@ def build_client(cfg: Dict[str, Any], **kw: Any) -> ModelClient:
         from .mock import MockClient
 
         return MockClient(cfg, **kw)  # type: ignore[return-value]
+    if provider == "reqbody_gateway":
+        from .reqbody_gateway import ReqBodyClient
+
+        return ReqBodyClient(cfg, **kw)
     if provider not in ("openai_compat", "openai", "vllm", "sglang", "tgi", "lmdeploy"):
-        raise ValueError(f"未知 provider：{provider}（支持 openai_compat / mock）")
+        raise ValueError(f"未知 provider：{provider}（支持 openai_compat / reqbody_gateway / mock）")
     return ModelClient(cfg, **kw)

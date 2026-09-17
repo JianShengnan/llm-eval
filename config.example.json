@@ -3,6 +3,7 @@
   "_说明_2": "阶段 1（微调前）：python -m geval run --config config.json --models pangu7b-pre,qwen8b-pre,qwen3-32b",
   "_说明_3": "阶段 1.5（微调后）：微调完成后直接跑全量，config 里 5 个模型都已定义：python -m geval run --config config.json --resume",
   "_说明_4": "base_url / model 都是占位值，务必改成你实际部署的地址与模型名。",
+  "_说明_5": "qwen3-32b 走 reqbody_gateway：现网网关要求整个请求体包在 reqBody 里、鉴权放 body 内（实现见 geval/reqbody_gateway.py）。user_suffix 会追加到 user 消息末尾，如 Qwen3 的 /no_think；网关是否支持 logprobs / completions 未知，故关掉 logprobs。",
 
   "run_name": "geval-general-5objects",
   "output_dir": "runs",
@@ -75,13 +76,13 @@
     {
       "id": "qwen3-32b",
       "label": "Qwen3-32B（现网基线）",
-      "provider": "openai_compat",
-      "base_url": "http://127.0.0.1:8003/v1",
-      "api_key": "EMPTY",
-      "model": "qwen3-32b",
-      "params": { "temperature": 0, "top_p": 1.0, "max_tokens": 2048 },
-      "extra_body": { "chat_template_kwargs": { "enable_thinking": false } },
-      "supports_logprobs": true
+      "provider": "reqbody_gateway",
+      "base_url": "http://<现网网关地址>/model/v1",
+      "api_key": "sk-xxx",
+      "model": "chat-short-ma",
+      "params": { "temperature": 0.1, "top_p": 0.1, "max_tokens": 2048 },
+      "user_suffix": "/no_think",
+      "supports_logprobs": false
     }
   ],
 
