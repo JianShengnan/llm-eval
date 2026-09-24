@@ -43,6 +43,7 @@ python -m geval run --config config.smoke.json --smoke
 # 真实评测（改好 config.example.json 里的模型地址后）
 cp config.example.json config.json
 python -m geval probe  --config config.json            # 端点探活
+python -m geval count  --config config.json            # 跑之前先看清样本量与请求量
 # 阶段 1：只跑微调前已有的 3 个模型
 python -m geval run    --config config.json --smoke --limit 8 \
        --models pangu7b-pre,qwen8b-pre,qwen3-32b       # 先验证接线
@@ -63,6 +64,24 @@ python -m geval report --run runs/geval-general-5objects
 
 ```bash
 bash scripts/run_stage1.sh
+```
+
+数据集多、总量上万条时（CMMLU / BBH 这类），默认串行会非常慢。
+**批量跑与少测数据集的完整做法见 [`docs/BATCH_RUNBOOK.md`](docs/BATCH_RUNBOOK.md)**，最短上手：
+
+```bash
+# ① 任务并行：一行命令，多个数据集同时推进，仍然只出一份完整报告
+python -m geval run --config config.json --parallel-tasks 3 --resume
+
+# ② 分批 + 合并：最贵的数据集单独起进程跑，最后合成一张总表
+python -m geval run --config config.json --run-name p-cmmlu --tasks cmmlu --resume &
+python -m geval run --config config.json --run-name p-rest  --tasks ceval,gsm8k,bbh,ifeval,json_schema --resume &
+wait
+python -m geval merge-runs runs/p-cmmlu runs/p-rest --run-name merged
+
+# ③ 少测某个数据集 / 抽样
+python -m geval run --config config.json --tasks ifeval,json_schema
+python -m geval run --config config.json --limit 300 --run-name quick
 ```
 
 **运行环境要求：Python 3.9+，零第三方依赖。** 内网 ARM64 离线可用，拷目录即可：
@@ -203,6 +222,10 @@ python scripts/verify_deps.py     # 输出「第三方依赖：无」
 | `cache_dir` | 磁盘缓存，仅缓存 `temperature == 0` 的确定性请求，避免缓存污染 |
 | `tasks[].limit` | 分层抽样上限。`0` = 全量 |
 | `tasks[].tag` | 同一任务起别名，用于并行对比不同 prompt 协议 |
+| `tasks[].max_tokens` | 逐任务的生成上限（覆盖模型级 `params.max_tokens`）。选择题配 `direct` 协议时设 16 能显著提速 |
+
+命令行：`--parallel-tasks N` 让同一模型内的多个数据集并行（实际在途 ≤ N × concurrency），
+`merge-runs` 把分批运行的多个 run 目录合并成一张总表，详见 `docs/BATCH_RUNBOOK.md`。
 | `report.baseline` | 配对检验的基线模型 id，一般填现网的 Qwen3-32B |
 | `report.pairs` | 指定配对，用于微调前 / 后对比 |
 
@@ -300,7 +323,7 @@ llm-general-eval/
   config.smoke.json        干跑配置（mock 模型，不连真实服务）
   requirements.txt         无第三方依赖（说明性文件）
   geval/
-    __main__.py            CLI：doctor / run / report / selftest / count / preview / probe
+    __main__.py            CLI：doctor / run / report / selftest / count / preview / probe / merge-runs
     client.py              OpenAI 兼容客户端（并发安全、重试、磁盘缓存、logprobs）
     http.py                urllib 传输层（代理策略、退避重试）
     datasets.py            多格式归一化、去重、分层抽样、合成数据
@@ -310,6 +333,7 @@ llm-general-eval/
     tasks.py               任务注册表（MCQ / 数值 / 短答案 / JSON / IFEval）
     ifeval.py              24 类规则化指令校验器
     runner.py              编排：并发执行、断点续跑、落盘、指纹
+    merge.py               合并多个分批运行目录，重建 summary.json
     report.py              Markdown + 自包含 HTML（内联 SVG 图表）
     mock.py                确定性 mock 模型（离线自检用）
   datasets/
@@ -317,6 +341,7 @@ llm-general-eval/
     json_schema/           意图 + 槽位示例数据集（含 schema.json）
   docs/
     INTRANET_RUNBOOK.md    ★ 行内运行手册（部署、执行、故障排查，实操优先）
+    BATCH_RUNBOOK.md       ★ 批量评测手册：任务并行 / 分批跑 / merge-runs 合并
     COVERAGE.md            五项需求的覆盖度对照（支持什么、不支持什么、缺口在哪）
     EVAL_METHODOLOGY.md    与开源框架的关系、可比性边界、专业能力测评设计
     OFFLINE_DEPLOY.md      把 lm-eval / EvalScope 离线装进内网 ARM64 的实操指南
@@ -353,6 +378,24 @@ llm-general-eval/
 
 **Q：跑全量太贵/太慢？**
 先用 `--limit 40` 分层抽样看排序，排序稳定后再全量。抽样运行的报告会自动标注不可与榜单直接对齐。
+数据量上万条时还可以：加 `--parallel-tasks N` 让数据集之间并行，或按数据集拆成多个进程
+分批跑完再用 `merge-runs` 合成一张总表。完整做法见 `docs/BATCH_RUNBOOK.md`。
+
+**Q：能不能只测其中几个数据集？**
+可以。命令行用 `--tasks ceval,json_schema`（按任务 `name` 匹配，不含 `tag`），
+或在配置里逐任务设 `limit` / 直接删掉不需要的 `tasks` 条目。
+
+**Q：多个进程同时跑，为什么报告少了一半？**
+它们共用了同一个 run 目录，收尾时 `summary.json` 被最后一个进程整体覆盖。
+分批必须各用各的 `--run-name`，跑完用 `merge-runs` 合并。
+
+**Q：某个大数据集（cmmlu / bbh）跑了很久都不出进度条？**
+三个成因：① 刷新步长按条数算，CMMLU 旧逻辑要 579 条才刷一次，前三分钟静默；
+② 进度用 `\r` 原地刷新，重定向到日志或跑在 IDE 面板里会叠成一行；
+③ 多个进程往同一终端写会互相覆盖。前两个已在代码里修掉（条数步长上限 100 +
+时间兜底刷新 + 非终端自动逐行），排查细节见 `docs/BATCH_RUNBOOK.md`。
+最可靠的进度观测是数落盘行数（样本逐条 flush）：
+`watch -n 5 'wc -l runs/<run_name>/<model>/*.jsonl'`。
 
 **Q：中断了怎么办？**
-所有结果逐条落盘。加 `--resume` 续跑，会自动跳过已完成的样本。
+所有结果逐条落盘。加 `--resume` 续跑，会自动跳过已完成的样本。任务并行与 `--resume` 可以同时用。

@@ -127,9 +127,27 @@ class JsonlWriter:
 # 计数 / 格式化
 # --------------------------------------------------------------------------- #
 class Progress:
-    """极简进度打印器：无 tqdm 依赖，按固定步长节流输出。"""
+    """极简进度打印器：无 tqdm 依赖，**条数 + 时间双节流**。
 
-    def __init__(self, total: int, label: str = "", every: int = 20, stream=None) -> None:
+    为什么必须加时间节流：早年只按 `done % every == 0` 判断，而 every 由
+    `总样本数 // 20` 推出 —— CMMLU 11582 条算出来是 579，意味着前 579 条跑完之前
+    一行都不打印。并发 8、单请求 3s 时要等三分钟才看到第一行，观感就是
+    「这个数据集没有进度条 / 卡死了」。现在保底每 `min_interval` 秒刷新一次。
+
+    另一半问题是 `\r` 原地刷新在**非终端**（重定向进日志、IDE 输出面板、CI）里
+    不会换行，几百次刷新全部叠在同一行，日志里等于没有进度。因此检测到
+    输出不是 TTY 时自动切成逐行输出。
+    """
+
+    def __init__(
+        self,
+        total: int,
+        label: str = "",
+        every: int = 20,
+        stream=None,
+        line_mode: bool = False,
+        min_interval: float = 0.0,
+    ) -> None:
         import sys
 
         self.total = max(0, int(total))
@@ -139,11 +157,27 @@ class Progress:
         self.done = 0
         self._lock = threading.Lock()
         self._t0 = time.time()
+        self.min_interval = max(0.0, float(min_interval))
+        self._last_render = self._t0
+        # line_mode：多任务并行、或输出不是终端时改为换行输出
+        if not line_mode:
+            try:
+                line_mode = not self.stream.isatty()
+            except Exception:  # noqa: BLE001  # 无 isatty（如被包装的流）时保守地逐行输出
+                line_mode = True
+        self.line_mode = bool(line_mode)
+
+    def kickoff(self) -> None:
+        """任务刚开跑就渲染一次 0/N，立刻让人知道这批已经启动。"""
+        with self._lock:
+            self._render()
 
     def tick(self, n: int = 1) -> None:
         with self._lock:
             self.done += n
-            if self.total and (self.done % self.every == 0 or self.done >= self.total):
+            due = bool(self.total) and (self.done % self.every == 0 or self.done >= self.total)
+            stale = self.min_interval > 0 and (time.time() - self._last_render) >= self.min_interval
+            if due or stale:
                 self._render()
 
     def _render(self) -> None:
@@ -152,16 +186,20 @@ class Progress:
         pct = (100.0 * self.done / self.total) if self.total else 0.0
         eta = ((self.total - self.done) / rate) if rate > 0 and self.total else 0.0
         self.stream.write(
-            f"\r  {self.label} {self.done}/{self.total} ({pct:5.1f}%) "
+            ("" if self.line_mode else "\r")
+            + f"  {self.label} {self.done}/{self.total} ({pct:5.1f}%) "
             f"{rate:5.1f}/s ETA {eta:6.0f}s   "
+            + ("\n" if self.line_mode else "")
         )
+        self._last_render = time.time()
         self.stream.flush()
 
     def finish(self) -> None:
         with self._lock:
             self._render()
-            self.stream.write("\n")
-            self.stream.flush()
+            if not self.line_mode:
+                self.stream.write("\n")
+                self.stream.flush()
 
 
 def fmt_pct(x: Optional[float], digits: int = 2) -> str:

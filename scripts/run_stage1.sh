@@ -11,6 +11,10 @@ cd "$(dirname "$0")/.."
 PY="${PY:-python3}"
 CFG="${CFG:-config.json}"
 PRE_MODELS="${PRE_MODELS:-pangu7b-pre,qwen8b-pre,qwen3-32b}"
+# 同一模型内并行跑几个数据集。总并发 = PARALLEL_TASKS × concurrency。
+# 数据集量大时（CMMLU/BBH 上万条）调到 2~4 可显著缩短墙钟时间，
+# 服务端开始重试/报错就调回去。详见 docs/BATCH_RUNBOOK.md
+PARALLEL_TASKS="${PARALLEL_TASKS:-1}"
 
 if [[ ! -f "$CFG" ]]; then
   echo "找不到 $CFG；先执行： cp config.example.json config.json  然后填好模型地址" >&2
@@ -42,13 +46,16 @@ echo "=========================================================="
 echo " 第 3 步 · 小样本真实评测：先看能力排序与 prompt 协议优劣"
 echo "         分层抽样，成本约全量的 3%，排序结论已可用"
 echo "=========================================================="
-"$PY" -m geval run --config "$CFG" --limit 40 --models "$PRE_MODELS" --resume
+"$PY" -m geval run --config "$CFG" --limit 40 --models "$PRE_MODELS" --resume \
+      --parallel-tasks "$PARALLEL_TASKS"
 
 echo
 echo "=========================================================="
 echo " 第 4 步 · 阶段 1 正式评测（微调前 3 个模型，全量）"
+echo "         任务并行度 PARALLEL_TASKS=$PARALLEL_TASKS"
 echo "=========================================================="
-"$PY" -m geval run --config "$CFG" --models "$PRE_MODELS" --resume
+"$PY" -m geval run --config "$CFG" --models "$PRE_MODELS" --resume \
+      --parallel-tasks "$PARALLEL_TASKS"
 
 echo
 echo "阶段 1 完成。报告位于 runs/<run_name>/report.html"

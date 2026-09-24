@@ -22,6 +22,7 @@ from . import prompts as pm
 from .answers import (
     CHOICE_LETTERS,
     equal_loose,
+    canonical_gold_numeric,
     extract_choice,
     extract_json,
     extract_last_line,
@@ -341,12 +342,15 @@ class NumericTask(BaseTask):
     lang = "zh"
 
     def mock_entry(self, record: Dict[str, Any]) -> Dict[str, Any]:
-        return {"gold": record.get("answer"), "kind": "numeric"}
+        gold = canonical_gold_numeric(record.get("answer"))
+        return {"gold": gold if gold is not None else record.get("answer"), "kind": "numeric"}
 
     def run_one(self, item: WorkItem, client: Any) -> Dict[str, Any]:
         row = self._row(item, client)
-        gold = item.record.get("answer")
-        row["gold"] = gold
+        gold_raw = item.record.get("answer")
+        # 数据集的 answer 可能是整段 CoT（GSM8K 的 "....\n#### 18"），必须先归一成数值
+        gold = canonical_gold_numeric(gold_raw)
+        row["gold"] = gold if gold is not None else gold_raw
         reply = client.chat(item.messages, max_tokens=self.max_tokens)
         row["latency_ms"] = reply.latency_ms
         row["prompt_tokens"] = reply.usage.prompt_tokens

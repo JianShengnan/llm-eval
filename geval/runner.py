@@ -42,6 +42,10 @@ class RunSpec:
     allow_synthetic: bool = False
     quiet: bool = False
     cache_dir: Optional[str] = None
+    # 同一模型内的任务并行度。>1 时多个数据集同时跑，实际总并发 = parallel_tasks × concurrency。
+    parallel_tasks: int = 1
+    # 进度最小刷新间隔（秒）。0 = 自动（终端 2s / 逐行输出 10s）。
+    progress_interval: float = 0.0
 
 
 def make_run_spec(cfg: Dict[str, Any], **kw: Any) -> RunSpec:
@@ -101,10 +105,11 @@ class Runner:
     def run(self) -> Dict[str, Any]:
         data_root = str(self.cfg.get("data_root") or "datasets")
         models = self._models()
-        task_specs = self._tasks()
+        task_specs = list(self._tasks())
 
         self._write_manifest(models, task_specs, data_root)
 
+        parallel = max(1, int(self.spec.parallel_tasks or 1))
         for mcfg in models:
             mid = str(mcfg["id"])
             self.model_labels[mid] = str(mcfg.get("label") or mid)
@@ -116,17 +121,13 @@ class Runner:
                 proxy=str(self.cfg.get("proxy") or "bypass"),
             )
             self.summary.setdefault(mid, {})
-            for tspec in task_specs:
-                task_name = str(tspec.get("name"))
-                task_key = str(tspec.get("tag") or task_name)
-                try:
-                    agg = self._run_task(client, mcfg, task_name, task_key, tspec, data_root)
-                    self.summary[mid][task_key] = agg
-                except Exception as exc:  # noqa: BLE001
-                    msg = f"{mid}/{task_key} 执行失败：{type(exc).__name__}: {exc}"
-                    self.errors.append(msg)
-                    print(f"[error] {msg}", file=sys.stderr)
-                    self.summary[mid][task_key] = {"n": 0, "score": None, "error": str(exc)}
+            if parallel > 1 and len(task_specs) > 1:
+                aggs = self._run_tasks_parallel(client, mcfg, task_specs, data_root, parallel)
+            else:
+                aggs = [self._execute_task(client, mcfg, ts, data_root) for ts in task_specs]
+            # 保持与配置一致的顺序写回汇总，报告列顺序才稳定
+            for tspec, agg in zip(task_specs, aggs):
+                self.summary[mid][str(tspec.get("tag") or tspec.get("name"))] = agg
 
             stats = client.stats()
             with self._lock:
@@ -139,6 +140,54 @@ class Runner:
             "summary": self.summary,
             "errors": self.errors,
         }
+
+    # ------------------------------------------------------------------ #
+    def _execute_task(
+        self,
+        client: Any,
+        mcfg: Dict[str, Any],
+        tspec: Dict[str, Any],
+        data_root: str,
+    ) -> Dict[str, Any]:
+        """跑单个「模型 × 任务」，把异常收敛成一行错误记录，避免拖垮整次运行。"""
+        task_name = str(tspec.get("name"))
+        task_key = str(tspec.get("tag") or task_name)
+        try:
+            return self._run_task(client, mcfg, task_name, task_key, tspec, data_root)
+        except Exception as exc:  # noqa: BLE001
+            msg = f"{mcfg['id']}/{task_key} 执行失败：{type(exc).__name__}: {exc}"
+            with self._lock:
+                self.errors.append(msg)
+            print(f"[error] {msg}", file=sys.stderr)
+            return {
+                "n": 0,
+                "score": None,
+                "error": str(exc),
+                "task": task_key,
+                "task_name": task_name,
+                "model": str(mcfg["id"]),
+                "model_label": self.model_labels.get(str(mcfg["id"]), str(mcfg["id"])),
+            }
+
+    def _run_tasks_parallel(
+        self,
+        client: Any,
+        mcfg: Dict[str, Any],
+        task_specs: List[Dict[str, Any]],
+        data_root: str,
+        parallel: int,
+    ) -> List[Dict[str, Any]]:
+        """同一模型内的多个数据集并行执行。
+
+        意义不在"省请求"，而在两点：
+        1. 尾延迟隔离：慢的数据集不再阻塞快的；
+        2. 可以在不修改 per-task concurrency 的前提下放大总并发。
+        返回结果按输入顺序排列，保证 report 的列顺序稳定。
+        """
+        workers = max(1, min(int(parallel), len(task_specs)))
+        with futures.ThreadPoolExecutor(max_workers=workers) as pool:
+            futs = [pool.submit(self._execute_task, client, mcfg, ts, data_root) for ts in task_specs]
+            return [f.result() for f in futs]
 
     # ------------------------------------------------------------------ #
     def _run_task(
@@ -186,9 +235,23 @@ class Runner:
 
         if todo:
             writer = JsonlWriter(out_path, append=bool(done_ids))
+            # 多任务并行时每个任务各自刷 \r 会互相覆盖，改为逐行输出，方便按数据集看进度
+            parallel = max(1, int(self.spec.parallel_tasks or 1))
+            every = max(1, len(todo) // (10 if parallel > 1 and len(todo) > 200 else 20))
+            every = min(every, 100)  # 大数据集别让步长大到「前几百条一行不出」
             progress = (
-                None if self.spec.quiet else Progress(len(todo), label=f"{mcfg['id']}/{task_key}", every=max(1, len(todo) // 20))
+                None
+                if self.spec.quiet
+                else Progress(
+                    len(todo),
+                    label=f"{mcfg['id']}/{task_key}",
+                    every=every,
+                    line_mode=parallel > 1,
+                    min_interval=_progress_interval(self.spec.progress_interval, parallel),
+                )
             )
+            if progress:
+                progress.kickoff()
             try:
                 with futures.ThreadPoolExecutor(max_workers=max(1, self.spec.concurrency)) as pool:
                     future_map = {pool.submit(task.run_one, it, client): it for it in todo}
@@ -253,6 +316,7 @@ class Runner:
             "machine": platform.machine(),
             "data_root": os.path.abspath(data_root),
             "concurrency": self.spec.concurrency,
+            "parallel_tasks": max(1, int(self.spec.parallel_tasks or 1)),
             "seed": self.cfg.get("seed"),
             "proxy": self.cfg.get("proxy") or "bypass",
             "limit_override": self.spec.limit_override,
@@ -291,6 +355,22 @@ def _done_ids(path: str) -> set:
 
 def _sub(root: Optional[str], name: str) -> str:
     return os.path.join(str(root), name) if root else ""
+
+
+def _progress_interval(explicit: float, parallel: int) -> float:
+    """进度的最小刷新间隔（秒）。
+
+    串行且输出是终端时用 `\r` 原地刷新，2 秒一次最跟手也不会刷屏；
+    逐行输出的场景（任务并行 / 输出被重定向到日志）会真的占行数，放宽到 10 秒。
+    """
+    try:
+        explicit = float(explicit or 0.0)
+    except (TypeError, ValueError):
+        explicit = 0.0
+    if explicit > 0:
+        return explicit
+    is_tty = bool(getattr(sys.stderr, "isatty", lambda: False)())
+    return 2.0 if (is_tty and parallel <= 1) else 10.0
 
 
 def _breakdown(scored: Sequence[Dict[str, Any]], task_name: str) -> List[Dict[str, Any]]:

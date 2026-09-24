@@ -4,24 +4,28 @@
     python -m geval list-tasks                    查看内置任务与默认设置
     python -m geval preview --task ceval          打印真实 prompt 样例，先看再跑
     python -m geval probe   --config config.json  模型端点探活
-    python -m geval run     --config config.json [--smoke] [--resume]
+    python -m geval run     --config config.json [--smoke] [--resume] [--parallel-tasks N]
     python -m geval report  --run runs/<name> [--baseline qwen3-32b]
+    python -m geval merge-runs runs/p-ceval runs/p-cmmlu --run-name merged
 """
 
 from __future__ import annotations
 
 import argparse
+import io
 import os
+import shutil
 import sys
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 from . import __version__
 from . import datasets as ds
 from . import report as rp
 from . import tasks as tk
+from .merge import merge_runs
 from .runner import Runner, make_run_spec, probe_models
-from .util import ensure_dir, jdump, read_json, write_json
+from .util import Progress, ensure_dir, jdump, read_json, write_json
 
 
 # --------------------------------------------------------------------------- #
@@ -175,10 +179,14 @@ def cmd_run(args: argparse.Namespace) -> int:
         # 不消耗真实题目，确认无误后再切全量。
         allow_synthetic=bool(args.synthetic or args.smoke),
         quiet=bool(args.quiet),
+        parallel_tasks=max(1, int(args.parallel_tasks or 1)),
+        progress_interval=float(args.progress_interval or 0),
     )
     print(f"geval {__version__} — 运行开始：{spec.run_name}")
     print(f"  输出目录   {spec.run_dir}")
-    print(f"  并发数     {spec.concurrency}")
+    print(f"  并发数     {spec.concurrency}"
+          + (f"（任务并行 {spec.parallel_tasks} → 实际在途最多 {spec.concurrency * spec.parallel_tasks}）"
+             if spec.parallel_tasks > 1 else ""))
     print(f"  代理策略   {cfg.get('proxy') or 'bypass'}")
     if spec.limit_override:
         print(f"  抽样上限   {spec.limit_override} 条/任务")
@@ -719,6 +727,71 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_merge_runs(args: argparse.Namespace) -> int:
+    """合并多个分批运行目录。
+
+    典型场景：CMMLU / BBH 这种上万条的任务被拆成多个进程同时跑，
+    每个进程都有自己的 run 目录，最后合成一张总表出报告。
+    """
+    sources = [os.path.abspath(s) for s in args.runs]
+    missing = [s for s in sources if not os.path.isdir(s)]
+    if missing:
+        raise SystemExit("以下目录不存在：\n  " + "\n  ".join(missing))
+
+    out_root = args.out or os.path.dirname(sources[0]) or "."
+    run_name = args.run_name or time.strftime("merged-%Y%m%d-%H%M%S")
+    dst = os.path.join(os.path.abspath(out_root), run_name)
+    if dst in sources:
+        raise SystemExit(f"输出目录与某个源目录相同：{dst}（merge 只允许写入新目录）")
+
+    print(f"geval {__version__} — 合并运行目录")
+    print(f"  源目录     {len(sources)} 个")
+    for s in sources:
+        print(f"    · {s}")
+    print(f"  输出目录   {dst}\n")
+
+    try:
+        info = merge_runs(
+            sources,
+            dst,
+            baseline=args.baseline,
+            pairs=args.pairs,
+            make_report=not args.no_report,
+        )
+    except ValueError as exc:
+        raise SystemExit(f"合并失败：{exc}")
+
+    if info["report"]:
+        print(f"\n报告：{info['report']['html']}")
+        print(f"      {info['report']['markdown']}")
+    return 0
+
+
+def _selftest_split_run(src_dir: str, dst_dir: str, keep_tasks: Sequence[str]) -> str:
+    """自检用：把一次运行按任务拆成「只跑了一半数据集」的分批目录。
+
+    刻意连 summary.json 一起删掉，顺带覆盖 merge 的降级路径（从任务级 summary 文件重建）。
+    """
+    if os.path.isdir(dst_dir):
+        shutil.rmtree(dst_dir)
+    shutil.copytree(src_dir, dst_dir)
+    keep = set(keep_tasks)
+    for model in os.listdir(dst_dir):
+        mdir = os.path.join(dst_dir, model)
+        if not os.path.isdir(mdir):
+            continue
+        for fname in list(os.listdir(mdir)):
+            if not fname.endswith((".jsonl", ".summary.json")):
+                continue
+            stem = fname[: -len(".summary.json")] if fname.endswith(".summary.json") else fname[: -len(".jsonl")]
+            if stem not in keep:
+                os.remove(os.path.join(mdir, fname))
+    summary_path = os.path.join(dst_dir, "summary.json")
+    if os.path.exists(summary_path):
+        os.remove(summary_path)
+    return dst_dir
+
+
 # --------------------------------------------------------------------------- #
 def _selftest_config(base_dir: str, n: int) -> Dict[str, Any]:
     return {
@@ -907,6 +980,73 @@ def cmd_selftest(args: argparse.Namespace) -> int:
     if before_stat != (os.path.getmtime(probe_path), os.path.getsize(probe_path)):
         problems.append("续跑时重写了已完成的样本文件（应直接复用）")
 
+    # ---- 进度刷新：大任务的节流必须兜住，否则看上去像卡死 ----
+    buf = io.StringIO()
+    prog = Progress(total=20000, label="probe/big", every=579, stream=buf, min_interval=1.0)
+    prog.tick(1)
+    if buf.getvalue():
+        problems.append("进度在条数阈值与时间间隔都没到时就刷新了，会刷屏")
+    prog._last_render -= 5.0  # 直接回拨时间戳模拟"过了 5 秒"，避免真等
+    prog.tick(1)
+    if "2/20000" not in buf.getvalue():
+        problems.append("大任务进度缺少时间节流：每 579 条才刷新一次时，前几分钟一行都不出")
+    if not Progress(total=100, label="p", every=10, stream=io.StringIO()).line_mode:
+        problems.append("输出不是终端时未切逐行刷新：重定向到日志后 \\r 会把进度叠成一行")
+
+    # ---- 任务并行：同一批样本用 --parallel-tasks 重跑，分数必须与串行完全一致 ----
+    par_tasks = max(2, min(3, len(tasks)))
+    par_spec = make_run_spec(
+        cfg, run_name="selftest-parallel", allow_synthetic=True, quiet=True, parallel_tasks=par_tasks
+    )
+    if os.path.isdir(par_spec.run_dir):
+        shutil.rmtree(par_spec.run_dir)
+    par_result = Runner(par_spec).run()
+    par_scores = {
+        (m, t): ((par_result["summary"].get(m) or {}).get(t) or {}).get("score")
+        for m in par_result["summary"]
+        for t in tasks
+    }
+    if par_scores != first_scores:
+        problems.append(f"并行_tasks={par_tasks} 的分数与串行不一致，任务并行存在竞态或状态串扰")
+    par_manifest = read_json(os.path.join(par_spec.run_dir, "manifest.json"), default={}) or {}
+    if int(par_manifest.get("parallel_tasks") or 0) != par_tasks:
+        problems.append("manifest 未记录 parallel_tasks，复现指纹不完整")
+
+    # ---- 合并：把结果按任务拆成两个目录，合并后必须回到完整总表 ----
+    tasks_sorted = sorted(tasks)
+    cut = max(1, len(tasks_sorted) // 2)
+    src_a = _selftest_split_run(spec.run_dir, os.path.join(base_dir, "merge-src-a"), tasks_sorted[:cut])
+    src_b = _selftest_split_run(spec.run_dir, os.path.join(base_dir, "merge-src-b"), tasks_sorted[cut:])
+    merge_dst = os.path.join(base_dir, "merge-result")
+    if os.path.isdir(merge_dst):
+        shutil.rmtree(merge_dst)
+    try:
+        info = merge_runs([src_a, src_b], merge_dst, baseline="mock-weak", make_report=True, quiet=True)
+    except (ValueError, OSError) as exc:
+        problems.append(f"合并失败：{type(exc).__name__}: {exc}")
+        info = None
+
+    if info is not None:
+        merged = rp.load_run(merge_dst)
+        merged_tasks = set(rp.available_tasks(merged))
+        if merged_tasks != set(tasks_sorted):
+            problems.append(
+                f"合并结果任务不全：期望 {len(tasks_sorted)} 个，实际 {len(merged_tasks)} 个（{'、'.join(sorted(merged_tasks))}）"
+            )
+        merged_scores = {
+            (m, t): ((merged.get("results", {}).get(m) or {}).get(t) or {}).get("score")
+            for m in (merged.get("results") or {})
+            for t in tasks_sorted
+        }
+        if merged_scores != first_scores:
+            problems.append("合并后的分数与原始运行不一致，合并过程可能覆盖了明细数据")
+        # 配对检验依赖逐样本 jsonl，必须被复制过来
+        flags_ok = bool(rp.load_flags(merge_dst, "mock-mid", "json_schema"))
+        if not flags_ok:
+            problems.append("合并目录缺少逐样本明细 jsonl，配对显著性检验会失效")
+        if not (merged.get("merged") or {}).get("sources"):
+            problems.append("summary.json 缺少合并来源记录，无法追溯分批信息")
+
     if problems:
         print("\n自检发现问题：")
         for p in problems:
@@ -921,6 +1061,8 @@ def cmd_selftest(args: argparse.Namespace) -> int:
     print("  · acc / acc_norm 续写似然解析口径正确（单 token / 多 token / 排序 / 兜底）")
     print("  · 微调影响评估的退化判定方向正确（无符号反转）")
     print("  · 断点续跑生效，HTML / Markdown 报告已生成")
+    print(f"  · 任务并行（parallel-tasks>1）结果与串行完全一致，无竞态")
+    print("  · merge-runs 能把两个分批目录合并回完整的总表并出报告")
     print(f"\n报告：{paths['html']}")
     return 0
 
@@ -945,6 +1087,10 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--limit", type=int, default=0, help="每个任务抽样上限（分层抽样）")
     r.add_argument("--tasks", help="仅运行指定任务（逗号分隔）")
     r.add_argument("--models", help="仅运行指定模型 id（逗号分隔）")
+    r.add_argument("--parallel-tasks", type=int, default=1,
+                   help="同一模型内并行执行几个数据集（>1 时总并发 = 该值 × concurrency）")
+    r.add_argument("--progress-interval", type=float, default=0,
+                   help="进度最小刷新间隔（秒），0=自动（终端 2s / 重定向到日志 10s）")
     r.add_argument("--resume", action="store_true", help="断点续跑，跳过已完成样本")
     r.add_argument("--baseline", help="报告中作为对比基线的模型 id")
     r.add_argument("--quiet", action="store_true", help="不打印进度")
@@ -955,6 +1101,15 @@ def build_parser() -> argparse.ArgumentParser:
     rp_.add_argument("--baseline", help="基线模型 id")
     rp_.add_argument("--pairs", help="配对对比，格式 a:b,c:d（用于微调前后对比）")
     rp_.set_defaults(func=cmd_report)
+
+    mg = sub.add_parser("merge-runs", help="合并多个 run 目录（分批并行跑完后汇总出一张总表）")
+    mg.add_argument("runs", nargs="+", help="要合并的 run 目录（可以只传一个，用于重建 summary.json）")
+    mg.add_argument("--out", help="输出根目录（默认：第一个源目录所在的父目录）")
+    mg.add_argument("--run-name", help="合并后的目录名（默认 merged-<时间戳>）")
+    mg.add_argument("--baseline", help="报告基线模型 id（默认取源配置的 report.baseline）")
+    mg.add_argument("--pairs", help="配对对比，格式 a:b,c:d")
+    mg.add_argument("--no-report", action="store_true", help="只合并，不生成报告")
+    mg.set_defaults(func=cmd_merge_runs)
 
     st = sub.add_parser("selftest", help="离线端到端自检（mock 模型 + 合成数据）")
     st.add_argument("--out", help="自检输出目录")
@@ -991,7 +1146,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.cmd == "report" and args.pairs:
+    if getattr(args, "cmd", None) in ("report", "merge-runs") and getattr(args, "pairs", None):
         args.pairs = [[a, b] for a, b in (pair.split(":") for pair in args.pairs.split(",") if ":" in pair)]
     else:
         args.pairs = None

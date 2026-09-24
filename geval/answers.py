@@ -207,6 +207,23 @@ def numbers_equal(pred: Optional[str], gold: Optional[str], tol: float = 1e-4) -
         return pred == gold
 
 
+def canonical_gold_numeric(raw: Any) -> Optional[str]:
+    """把数据集里的标准答案归一成可比较的数值字符串。
+
+    GSM8K / MATH 的 answer 字段是**整段 CoT**（"...\\n#### 18"），
+    直接交给 numbers_equal 会 float(gold) 抛 ValueError、退化成字符串全等比较，
+    于是模型答对了也判 0 分。这里必须先抽数值再比对。
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, (int, float)):
+        return canonical_number(str(raw))
+    canon, _ = extract_number(str(raw))
+    if canon is not None:
+        return canon
+    return canonical_number(str(raw))
+
+
 # --------------------------------------------------------------------------- #
 # 短答案（BBH / 开放式）
 # --------------------------------------------------------------------------- #

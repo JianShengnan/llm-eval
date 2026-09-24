@@ -30,3 +30,5 @@ datasets/**/*.jsonl
 .idea/
 .DS_Store
 Thumbs.db
+
+.workbuddy/
