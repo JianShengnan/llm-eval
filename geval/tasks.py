@@ -180,6 +180,10 @@ class BaseTask:
             "latency_ms": None,
             "prompt_tokens": 0,
             "completion_tokens": 0,
+            # finish_reason == "length" 是「输出被 max_tokens 截断」的唯一自证凭据。
+            # 思维链没关掉时，token 预算常被思考过程吃光，正文还没开始就结束，
+            # 表现就是 GSM8K 这类长推理任务整片 0 分。落盘它才能事后归因。
+            "finish_reason": "",
             "response": "",
             "error": None,
             "extras": {},
@@ -304,6 +308,7 @@ class MCQTask(BaseTask):
         row["latency_ms"] = reply.latency_ms
         row["prompt_tokens"] = reply.usage.prompt_tokens
         row["completion_tokens"] = reply.usage.completion_tokens
+        row["finish_reason"] = reply.finish_reason
         row["response"] = truncate(reply.text, MAX_RESPONSE_CHARS)
         if reply.error:
             row["error"] = reply.error
@@ -355,6 +360,7 @@ class NumericTask(BaseTask):
         row["latency_ms"] = reply.latency_ms
         row["prompt_tokens"] = reply.usage.prompt_tokens
         row["completion_tokens"] = reply.usage.completion_tokens
+        row["finish_reason"] = reply.finish_reason
         row["response"] = truncate(reply.text, MAX_RESPONSE_CHARS)
         if reply.error:
             row["error"] = reply.error
@@ -399,6 +405,7 @@ class BBHTask(BaseTask):
         row["latency_ms"] = reply.latency_ms
         row["prompt_tokens"] = reply.usage.prompt_tokens
         row["completion_tokens"] = reply.usage.completion_tokens
+        row["finish_reason"] = reply.finish_reason
         row["response"] = truncate(reply.text, MAX_RESPONSE_CHARS)
         if reply.error:
             row["error"] = reply.error
@@ -484,6 +491,7 @@ class JSONSchemaTask(BaseTask):
         row["latency_ms"] = reply.latency_ms
         row["prompt_tokens"] = reply.usage.prompt_tokens
         row["completion_tokens"] = reply.usage.completion_tokens
+        row["finish_reason"] = reply.finish_reason
         row["response"] = truncate(reply.text, MAX_RESPONSE_CHARS)
         if reply.error:
             row["error"] = reply.error
@@ -551,8 +559,20 @@ def _slots_equal(pred: Any, gold: Any) -> bool:
 
 
 def _has_extra_prose(text: str) -> bool:
-    stripped = (text or "").strip()
-    return not (stripped.startswith("{") and stripped.endswith("}"))
+    """判断响应是否夹带了 JSON 之外的散文。
+
+    先剥思维链、再剥 markdown 围栏：抽取器 extract_json 本来就能从 ```json 块里
+    取出对象，如果这里拿原始文本判断首尾字符，带围栏的输出会被判成「夹带散文」
+    而整条作废——于是「懂规矩但习惯用代码块包裹」的大模型被系统性误杀。
+    真正的散文（「好的，结果如下：{…}」）依然会被这里拦住。
+    """
+    import re
+
+    cleaned = strip_reasoning(text or "").strip()
+    fence = re.search(r"```(?:json)?\s*(.*?)```", cleaned, re.S | re.I)
+    if fence:
+        cleaned = fence.group(1).strip()
+    return not (cleaned.startswith("{") and cleaned.endswith("}"))
 
 
 def validate_schema(obj: Any, schema: Dict[str, Any], path: str = "$") -> bool:
@@ -629,12 +649,16 @@ class IFEvalTask(BaseTask):
         row["latency_ms"] = reply.latency_ms
         row["prompt_tokens"] = reply.usage.prompt_tokens
         row["completion_tokens"] = reply.usage.completion_tokens
+        row["finish_reason"] = reply.finish_reason
         row["response"] = truncate(reply.text, MAX_RESPONSE_CHARS)
         if reply.error:
             row["error"] = reply.error
             return row
 
-        res = check_response(reply.text, ids, kwargs)
+        # 必须先剥掉 <think>…</think>：IFEval 判的是「整段输出」的格式约束
+        # （字数上限、结尾句、禁用逗号、全小写……），思维链留在里面会被一起计入，
+        # 导致开了思考的模型在这项上被系统性压低。
+        res = check_response(strip_reasoning(reply.text), ids, kwargs)
         row.update(
             {
                 "pred": "pass" if res["prompt_pass"] else "fail",

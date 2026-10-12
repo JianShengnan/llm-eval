@@ -133,6 +133,40 @@ def paired_bootstrap_diff(
     return {"diff": obs, "lo": lo, "hi": hi, "p_two_sided": p}
 
 
+def _binom_cdf_half(n: int, k: int) -> float:
+    """P(X <= k)，X ~ Binomial(n, 0.5)，在对数空间计算。
+
+    为什么不能直接 `sum(math.comb(n, i)) * 0.5 ** n`
+    ------------------------------------------------
+    `math.comb(n, i)` 是精确整数。样本量大时它本身就有上千位十进制
+    （n=1200 时已超过 float 上限 1.8e308），再乘 `0.5 ** n` 时 Python 要把这个
+    大整数转成 float，直接抛 `OverflowError: int too large to convert to float` ——
+    万级样本的评测集（CMMLU / BBH）必然命中。
+
+    对数空间做法：先算 log C(n,i) - n·log2，再用 log-sum-exp 合并，
+    全程不涉及大整数，n 取到几万都没问题。真值小于 1e-308 时下溢为 0.0，
+    此时 p 报 0，判定为「极显著」，与原来的行为一致。
+    """
+    if k < 0:
+        return 0.0
+    if k >= n:
+        return 1.0
+    # 对称性：只算较小的一侧，项数更少且精度更高
+    if k > n - k - 1:
+        return 1.0 - _binom_cdf_half(n, n - k - 1)
+
+    log2 = math.log(2.0)
+    lg_n = math.lgamma(n + 1.0)
+    # 相邻项的递推比逐项 lgamma 更便宜：log C(n,0)=0，log C(n,i)=log C(n,i-1)+log((n-i+1)/i)
+    terms: List[float] = [-n * log2]
+    acc = -n * log2
+    for i in range(1, k + 1):
+        acc += math.log((n - i + 1) / i)
+        terms.append(acc)
+    m = max(terms)
+    return math.exp(m) * sum(math.exp(t - m) for t in terms)
+
+
 def mcnemar_exact_p(a_flags: Sequence[bool], b_flags: Sequence[bool]) -> Dict[str, Any]:
     """McNemar 精确检验（二项版）。比近似卡方更适用于中小评测集。
 
@@ -150,7 +184,7 @@ def mcnemar_exact_p(a_flags: Sequence[bool], b_flags: Sequence[bool]) -> Dict[st
     if total == 0:
         return {"b": 0, "c": 0, "n_discordant": 0, "p_two_sided": 1.0}
     k = min(b, c)
-    tail = sum(math.comb(total, i) for i in range(0, k + 1)) * (0.5 ** total)
+    tail = _binom_cdf_half(total, k)
     p = min(1.0, 2.0 * tail)
     return {"b": b, "c": c, "n_discordant": total, "p_two_sided": p}
 

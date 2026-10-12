@@ -15,6 +15,7 @@ import json
 import math
 import os
 import threading
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Union
 
@@ -67,6 +68,35 @@ class Reply:
 
 
 # --------------------------------------------------------------------------- #
+class RateLimiter:
+    """进程内的请求限流器（模型级 rate_limit_qps）。
+
+    为什么要有它：网关限流看的是**整条通道的并发/配额**，而 concurrency 只管本进程。
+    一旦同时开多个进程（多个任务各起一个 run），叠加起来的在途请求数远超配额，
+    表现就是大面积 429 / 超时。跨进程无法互相协调，至少让单进程自己别超发：
+    把速率压到 qps 以内，把 concurrency 当作「允许的排队长度」。
+
+    实现上刻意让持锁 sleep：限流本来就是要串行化发送，简单且不会被并发绕过。
+    """
+
+    def __init__(self, qps: float) -> None:
+        self.qps = float(qps or 0.0)
+        self.min_interval = (1.0 / self.qps) if self.qps > 0 else 0.0
+        self._next_at = 0.0
+        self._lock = threading.Lock()
+
+    def wait(self) -> None:
+        if self.min_interval <= 0:
+            return
+        with self._lock:
+            now = time.perf_counter()
+            if self._next_at > now:
+                time.sleep(self._next_at - now)
+                now = time.perf_counter()
+            self._next_at = max(now, self._next_at) + self.min_interval
+
+
+# --------------------------------------------------------------------------- #
 class ModelClient:
     """单个模型端点的客户端。实例可被多线程共享。"""
 
@@ -103,6 +133,8 @@ class ModelClient:
             headers=cfg.get("headers"),
             ssl_unverified=bool(cfg.get("ssl_unverified", False)),
         )
+        # 模型级自我限流：0 表示不限（本地 vLLM 通常不需要；现网网关必须设）
+        self.rate_limiter = RateLimiter(float(cfg.get("rate_limit_qps") or 0.0))
         self.cache_dir = ensure_dir(cache_dir) if cache_dir else None
         self.cache_hits = 0
         self._lock = threading.Lock()
@@ -123,6 +155,8 @@ class ModelClient:
                 "cache_hits": self.cache_hits,
                 "http_requests": self.http.stats["requests"],
                 "http_retries": self.http.stats["retries"],
+                # >0 就说明撞到了网关限流，是「调低并发 / 加 rate_limit_qps」的直接证据
+                "http_throttled": self.http.stats.get("throttled", 0),
                 "usage": self.usage.to_dict(),
                 "latency_ms_p50": _pct(lat, 50),
                 "latency_ms_p95": _pct(lat, 95),
@@ -282,6 +316,7 @@ class ModelClient:
 
     # ------------------------------------------------------------------ #
     def _request(self, path: str, payload: Dict[str, Any]) -> Reply:
+        self.rate_limiter.wait()
         deterministic = float(payload.get("temperature", 0) or 0) == 0.0
         cache_key = sha256_text(
             jdump({"path": path, "base_url": self.base_url, "payload": payload}, sort_keys=True)
@@ -343,8 +378,13 @@ class ModelClient:
         choice = choices[0]
         msg = choice.get("message") or {}
         text = msg.get("content")
-        if text is None:
+        if not text:
             text = choice.get("text") or ""
+        if not text:
+            # thinking 模型（Qwen3 / DeepSeek 等）在思考阶段被 max_tokens 截断时，
+            # message.content 为空、内容全在 reasoning_content 里。此时宁可用思考过程
+            # 兜底（抽取器会先 strip_reasoning），也不要返回空串让整条样本作废。
+            text = msg.get("reasoning_content") or ""
         # thinking 模型的思维链可能单独放在 reasoning_content，不参与答案抽取
         finish_reason = str(choice.get("finish_reason") or "")
 

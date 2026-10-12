@@ -36,6 +36,9 @@ class RunSpec:
     run_name: str
     concurrency: int = 8
     resume: bool = False
+    # 续跑时是否重跑上一轮失败（error）的样本。限流打崩一批之后，
+    # 只补跑失败样本比整任务重来省一个数量级的请求量。
+    retry_failed: bool = False
     limit_override: Optional[int] = None
     task_filter: Optional[List[str]] = None
     model_filter: Optional[List[str]] = None
@@ -201,6 +204,13 @@ class Runner:
     ) -> Dict[str, Any]:
         tspec = dict(tspec)
         tspec["_quiet"] = self.spec.quiet
+        # 生成长度预算的优先级：任务级显式配置 > 模型级 params.max_tokens > 1024。
+        # 任务级没有单独配 max_tokens 时必须落到模型级，否则 tasks.BaseTask 的默认值 1024
+        # 会静默覆盖模型配置（如 2048）——thinking 模型或长 CoT 任务会因此整片截断。
+        if not tspec.get("max_tokens"):
+            model_max = int(((mcfg.get("params") or {}).get("max_tokens")) or 0)
+            if model_max > 0:
+                tspec["max_tokens"] = model_max
         task = tk.get_task(task_name, tspec)
         records, examples = task.prepare(
             data_root,
@@ -212,7 +222,8 @@ class Runner:
 
         items = [task.build(r, examples) for r in records]
         out_path = os.path.join(self.spec.run_dir, str(mcfg["id"]), f"{task_key}.jsonl")
-        done_ids = _done_ids(out_path) if self.spec.resume else set()
+        done_rows = _done_rows(out_path, retry_failed=self.spec.retry_failed) if self.spec.resume else []
+        done_ids = {str(r.get("id")) for r in done_rows if r.get("id") is not None}
         todo = [it for it in items if str(it.record.get("id")) not in done_ids]
 
         if not self.spec.quiet:
@@ -229,9 +240,8 @@ class Runner:
                 client.register(it.prompt_key, it.mock_entry)
 
         scored: List[Dict[str, Any]] = []
-        if done_ids:
-            for row in read_jsonl(out_path):
-                scored.append(row)
+        if done_rows:
+            scored.extend(done_rows)
 
         if todo:
             writer = JsonlWriter(out_path, append=bool(done_ids))
@@ -340,17 +350,35 @@ class Runner:
 
 
 # --------------------------------------------------------------------------- #
-def _done_ids(path: str) -> set:
+def _done_rows(path: str, *, retry_failed: bool = False) -> List[Dict[str, Any]]:
+    """续跑时读取已完成的行。
+
+    retry_failed=True 会把上一轮带 error 的样本从磁盘剔除，让它们重新进入 todo。
+    这一步很关键：限流打崩的那一批如果留在文件里，--resume 会认为它们「已完成」，
+    于是失败率被永久固化进结果；剔除后再跑才是真正的补跑。
+    """
     if not os.path.exists(path):
-        return set()
-    ids = set()
+        return []
     try:
-        for row in read_jsonl(path):
-            if row.get("id") is not None:
-                ids.add(str(row["id"]))
+        rows = list(read_jsonl(path))
     except (OSError, ValueError):
-        return set()
-    return ids
+        return []
+    if not retry_failed:
+        return rows
+
+    kept = [r for r in rows if not r.get("error")]
+    dropped = len(rows) - len(kept)
+    if dropped:
+        tmp = path + f".prune{os.getpid()}"
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                for r in kept:
+                    f.write(jdump(r) + "\n")
+            os.replace(tmp, path)
+        except OSError:
+            pass
+        print(f"  [info] 剔除 {dropped} 条失败样本，本轮重跑：{path}", file=sys.stderr)
+    return kept
 
 
 def _sub(root: Optional[str], name: str) -> str:

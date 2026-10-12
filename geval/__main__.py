@@ -172,6 +172,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         cfg,
         run_name=args.run_name,
         resume=bool(args.resume),
+        retry_failed=bool(getattr(args, "retry_failed", False)),
         limit_override=args.limit if args.limit else None,
         task_filter=_split(args.tasks),
         model_filter=_split(args.models),
@@ -1092,6 +1093,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--progress-interval", type=float, default=0,
                    help="进度最小刷新间隔（秒），0=自动（终端 2s / 重定向到日志 10s）")
     r.add_argument("--resume", action="store_true", help="断点续跑，跳过已完成样本")
+    r.add_argument("--retry-failed", action="store_true",
+                   help="配合 --resume：把上一轮 error 的样本剔除后重跑（限流打崩后的补跑）")
     r.add_argument("--baseline", help="报告中作为对比基线的模型 id")
     r.add_argument("--quiet", action="store_true", help="不打印进度")
     r.set_defaults(func=cmd_run)

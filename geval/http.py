@@ -21,6 +21,9 @@ import urllib.request
 from typing import Any, Dict, Optional
 
 RETRY_STATUS = {408, 409, 425, 429, 500, 502, 503, 504, 522, 524}
+# 网关主动限流。与 5xx 的区别在于：这是「你发太快」而不是「服务端坏了」，
+# 退避必须更长，否则重试只会继续撞墙，把剩余配额也耗光。
+THROTTLE_STATUS = {429, 503}
 LOCAL_HOSTS = ("127.0.0.1", "localhost", "::1", "0.0.0.0")
 
 
@@ -70,19 +73,25 @@ class HttpClient:
         ssl_unverified: bool = False,
         backoff_base: float = 1.5,
         backoff_cap: float = 20.0,
+        throttle_backoff_base: float = 4.0,
+        throttle_backoff_cap: float = 60.0,
     ) -> None:
         self.base_url = (base_url or "").rstrip("/")
         self.timeout = float(timeout)
         self.retries = max(0, int(retries))
         self.backoff_base = float(backoff_base)
         self.backoff_cap = float(backoff_cap)
+        # 限流退避：底数更大、上限更高。网关的限流窗口常以 30~60s 计，
+        # 沿用 5xx 的 20s 上限会在窗口内反复重试，反而把配额打光。
+        self.throttle_backoff_base = float(throttle_backoff_base)
+        self.throttle_backoff_cap = float(throttle_backoff_cap)
         self.headers: Dict[str, str] = {"User-Agent": "geval/0.1"}
         if api_key:
             self.headers["Authorization"] = f"Bearer {api_key}"
         if headers:
             self.headers.update({k: str(v) for k, v in headers.items()})
         self.opener = build_opener(proxy, ssl_unverified=ssl_unverified)
-        self.stats = {"requests": 0, "retries": 0, "errors": 0}
+        self.stats = {"requests": 0, "retries": 0, "throttled": 0, "errors": 0}
 
     # ------------------------------------------------------------------ #
     def url(self, path: str) -> str:
@@ -90,12 +99,16 @@ class HttpClient:
             return path
         return f"{self.base_url}/{path.lstrip('/')}"
 
-    def _sleep(self, attempt: int, retry_after: Optional[float]) -> None:
+    def _sleep(self, attempt: int, retry_after: Optional[float], throttled: bool = False) -> None:
+        cap = self.throttle_backoff_cap if throttled else self.backoff_cap
+        base = self.throttle_backoff_base if throttled else self.backoff_base
         if retry_after is not None and retry_after > 0:
-            delay = min(self.backoff_cap, retry_after)
+            # 网关明确给了等待时间就听它的，但仍设一个 300s 硬上限防止被拖死
+            delay = min(retry_after, 300.0)
         else:
-            delay = min(self.backoff_cap, self.backoff_base ** attempt)
-        time.sleep(delay + random.uniform(0, 0.35))
+            delay = min(cap, base ** attempt)
+        # 抖动避免多个 worker 同时退避完后一起复活，再次把网关打爆
+        time.sleep(delay + random.uniform(0, 0.35 if not throttled else 2.0))
 
     def request_json(
         self,
@@ -142,8 +155,10 @@ class HttpClient:
                 status = err.status
                 if status in RETRY_STATUS and attempt < max_retries:
                     self.stats["retries"] += 1
+                    if status in THROTTLE_STATUS:
+                        self.stats["throttled"] += 1
                     last_err = err
-                    self._sleep(attempt, _retry_after(exc))
+                    self._sleep(attempt, _retry_after(exc), throttled=status in THROTTLE_STATUS)
                     continue
                 self.stats["errors"] += 1
                 raise err

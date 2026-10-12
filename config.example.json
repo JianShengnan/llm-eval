@@ -4,6 +4,8 @@
   "_说明_3": "阶段 1.5（微调后）：微调完成后直接跑全量，config 里 5 个模型都已定义：python -m geval run --config config.json --resume",
   "_说明_4": "base_url / model 都是占位值，务必改成你实际部署的地址与模型名。",
   "_说明_5": "qwen3-32b 走 reqbody_gateway：现网网关要求整个请求体包在 reqBody 里、鉴权放 body 内（实现见 geval/reqbody_gateway.py）。user_suffix 会追加到 user 消息末尾，如 Qwen3 的 /no_think；网关是否支持 logprobs / completions 未知，故关掉 logprobs。",
+  "_说明_5b": "网关/现网通道必须设 rate_limit_qps（单进程自我限流，如 1~2）并把 concurrency 调到 1~2。多进程同时跑多个任务时，叠加的并发会远超网关配额，表现为大面积 429/超时——此时请串行跑任务，别并行起进程。",
+  "_说明_5c": "被限流打崩过的结果不要直接出报告：失败样本会留在 jsonl 里并被 --resume 当成「已完成」。补跑用 --resume --retry-failed，它会先剔除 error 行再重跑。",
 
   "run_name": "geval-general-5objects",
   "output_dir": "runs",
@@ -82,7 +84,8 @@
       "model": "chat-short-ma",
       "params": { "temperature": 0.1, "top_p": 0.1, "max_tokens": 2048 },
       "user_suffix": "/no_think",
-      "supports_logprobs": false
+      "supports_logprobs": false,
+      "rate_limit_qps": 1
     }
   ],
 
