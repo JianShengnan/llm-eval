@@ -6,33 +6,39 @@
 
 | # | 需求 | 覆盖度 | 一句话说明 |
 | :- | :--- | :--- | :--- |
-| 1 | 通用能力评测（盘古7B / Qwen8B / Qwen3-32B） | ✅ 完全支持 | 已就绪，填 `base_url` 即可跑 |
+| 1 | 通用能力评测（当前单通道 `llm-chat-core`；5 对象模板含盘古7B / Qwen8B / Qwen3-32B） | ✅ 完全支持 | 已就绪，填 `base_url` 即可跑 |
 | 2 | 数据清洗 → 泛化 → 训练集/验证集 | ❌ 不支持 | 需独立数据处理管线；框架只能补「泄漏检测」这一小块 |
 | 3 | 盘古7B / Qwen8B 微调训练 | ❌ 不支持 | 需 LLaMA-Factory / ms-swift / PEFT，且需要 GPU 机器 |
-| 4 | 通用能力评测（微调后 3 对象） | ✅ 完全支持 | 含 pre→post 配对显著性检验与退化判定 |
-| 5 | 专业能力测评（5 个对象） | ⚠️ 部分支持 | 抽象层/统计层/报告层已备，专业指标与业务数据待补 |
+| 4 | 通用能力评测（微调后 3 对象，5 对象模板） | ✅ 完全支持 | 含 pre→post 配对显著性检验与退化判定 |
+| 5 | 专业能力测评（5 对象模板口径） | ⚠️ 部分支持 | 抽象层/统计层/报告层已备，专业指标与业务数据待补 |
 
 ---
 
 ## 1. 通用能力评测（微调前）— 完全支持
 
-**现状**：可直接执行。
+**现状**：可直接执行。当前实际配置是单模型 `config.json`（`llm-chat-core`）：
 
 ```bash
-cp config.example.json config.json     # 填三个模型的 base_url / model
 python -m geval probe  --config config.json
-python -m geval run    --config config.json --smoke --limit 8 --models pangu7b-pre,qwen8b-pre,qwen3-32b
-python -m geval run    --config config.json --limit 40 --models pangu7b-pre,qwen8b-pre,qwen3-32b
-python -m geval run    --config config.json --models pangu7b-pre,qwen8b-pre,qwen3-32b
+python -m geval run    --config config.json --smoke --limit 8
+python -m geval run    --config config.json --limit 40
+python -m geval run    --config config.json --resume
 ```
 
-**已具备**：8 类评测任务（C-Eval / CMMLU / MMLU / MMLU-Pro / ARC / AGIEval / GSM8K / BBH / IFEval / JSON-Schema）、
+5 对象模板（盘古7B / Qwen8B 的 pre、post + Qwen3-32B）另存为 `config.5objects.json` 后使用：
+
+```bash
+cp config.example.json config.5objects.json     # 填 5 个通道的 base_url / model
+python -m geval run --config config.5objects.json --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
+```
+
+**已具备**：12 个内置任务（C-Eval / CMMLU / MMLU / MMLU-Pro / ARC / AGIEval / GSM8K / BBH / MATH / IFEval / JSON-Schema / Intent-JSON）、
 三种 prompt 协议消融、三种打分路径（gen / logprob / loglikelihood）、
 置信区间与配对显著性检验、时延分布、解析质量诊断、自包含 HTML 报告。
 
 **前置条件**（不是框架能力问题，是数据问题）：
 - 联网机器跑 `scripts/prepare_datasets.py` 把公开基准转成 JSONL，拷进内网
-- 三个模型已在 vLLM 上服务化，且暴露 `/v1/chat/completions`（要 `acc_norm` 还需 `/v1/completions`）
+- 配置中的模型通道已在 vLLM 上服务化，且暴露 `/v1/chat/completions`（要 `acc_norm` 还需 `/v1/completions`）
 
 **可选增强**：离线部署 `lm-eval` 出一个可对标公开榜单的「锚点数字」，
 与 geval 结果比对偏移量。步骤见 `docs/OFFLINE_DEPLOY.md`。
@@ -115,14 +121,15 @@ python -m geval run    --config config.json --models pangu7b-pre,qwen8b-pre,qwen
 
 ## 4. 通用能力评测（微调后）— 完全支持
 
-**现状**：可直接执行，且报告会自动产出 pre→post 对比。
+**现状**：可直接执行，且报告会自动产出 pre→post 对比。**本节属于 5 对象模板流程**，
+当前单模型 `config.json` 没有 post 通道，会自动跳过该章节。
 
 ```bash
-# 微调完成后，起好两个新端点（config.json 里已定义 pangu7b-post / qwen8b-post）
-python -m geval run --config config.json --resume
+# 微调完成后，起好两个新端点（config.5objects.json 里已定义 pangu7b-post / qwen8b-post）
+python -m geval run --config config.5objects.json --resume
 ```
 
-报告第 4 节「微调影响评估」逐任务给出：
+报告里的「微调影响评估」一节逐任务给出（章节号随模型/配对数量动态变化，按标题定位）：
 
 - 微调前 / 微调后 / 差值（约定为 **post - pre**）/ 95% 置信区间 / McNemar p 值
 - 判定：**显著退化 / 显著提升 / 不显著（视为持平）**
@@ -136,7 +143,7 @@ python -m geval run --config config.json --resume
 
 ---
 
-## 5. 专业能力测评（5 个对象）— 部分支持
+## 5. 专业能力测评（5 对象模板口径）— 部分支持
 
 **架子已经打好，缺的是专业指标与业务数据。**
 

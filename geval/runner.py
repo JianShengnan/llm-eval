@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import concurrent.futures as futures
+import copy
 import os
 import platform
 import sys
@@ -334,7 +335,9 @@ class Runner:
             "tasks": task_specs,
         }
         write_json(os.path.join(self.spec.run_dir, "manifest.json"), manifest)
-        write_json(os.path.join(self.spec.run_dir, "config.json"), self.cfg)
+        # 配置快照必须保留 tasks / dimension_weights（报告要用），但 API key 不能跟着
+        # runs/ 目录一起被归档或发群。这里统一打码，不影响复现（key 只在发请求时用）。
+        write_json(os.path.join(self.spec.run_dir, "config.json"), _redact_config(self.cfg))
 
     def _write_summary(self) -> None:
         payload = {
@@ -350,6 +353,15 @@ class Runner:
 
 
 # --------------------------------------------------------------------------- #
+def _redact_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """复制一份配置用于落盘，隐去 models[].api_key。"""
+    snap = copy.deepcopy(cfg)
+    for m in snap.get("models") or []:
+        if isinstance(m, dict) and m.get("api_key"):
+            m["api_key"] = "***"
+    return snap
+
+
 def _done_rows(path: str, *, retry_failed: bool = False) -> List[Dict[str, Any]]:
     """续跑时读取已完成的行。
 

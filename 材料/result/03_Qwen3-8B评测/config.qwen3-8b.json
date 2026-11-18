@@ -1,0 +1,53 @@
+{
+  "_说明_1": "Qwen3-8B 在语音导航意图识别上的专业能力评测配置。模型与数据集解耦：数据集仍是 datasets/intent_routing/test.jsonl（432 条冻结测试集）。",
+  "_说明_2": "base_url 只写到 /v1，geval/client.py 会自动拼接 /chat/completions；model 必须与服务端 --served-model-name 完全一致。",
+  "_说明_3": "Qwen3 必须关闭 thinking：extra_body.chat_template_kwargs.enable_thinking=false，否则 64 token 会被思维链吃光、输出为空。",
+  "_说明_4": "temperature=0 才会命中磁盘缓存；dedupe 必须 false（432 条 prompt 前 200 字相同，通用去重会压成 1 条）。",
+  "_说明_5": "自建 vLLM 无需计费，cost 保持 0；报告会显示「未配置单价」。若走计费网关，按合同填每 1K token 单价。",
+  "_说明_6": "所有命令必须在项目根 D:/工作/文件/模型评测/llm-general-eval/llm-general-eval 执行，data_root 是相对 cwd 的路径。",
+
+  "run_name": "geval-qwen3-8b-intent",
+  "output_dir": "runs",
+  "data_root": "datasets",
+  "seed": 42,
+
+  "concurrency": 4,
+  "request_timeout_s": 180,
+  "retries": 3,
+  "proxy": "bypass",
+
+  "cache": true,
+  "cache_dir": ".cache/geval",
+
+  "models": [
+    {
+      "id": "qwen3-8b",
+      "label": "Qwen3-8B · 语音导航意图识别",
+      "provider": "openai_compat",
+      "base_url": "http://127.0.0.1:8000/v1",
+      "api_key": "EMPTY",
+      "model": "Qwen3-8B",
+      "params": { "temperature": 0, "max_tokens": 64 },
+      "extra_body": { "chat_template_kwargs": { "enable_thinking": false } },
+      "supports_logprobs": false,
+      "rate_limit_qps": 2
+    }
+  ],
+
+  "tasks": [
+    {
+      "name": "intent_routing",
+      "tag": "intent-routing",
+      "split": "test",
+      "num_fewshot": 0,
+      "protocol": "direct",
+      "mode": "gen",
+      "max_tokens": 64,
+      "dedupe": false,
+      "dimension": null
+    }
+  ],
+
+  "report": { "bootstrap": 2000, "alpha": 0.05 },
+  "cost": { "prompt_per_1k": 0.0, "completion_per_1k": 0.0 }
+}

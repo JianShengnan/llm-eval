@@ -1,5 +1,6 @@
 {
   "_说明": "干跑配置：5 个 mock 模型 + 内置合成数据，验证整条链路与「微调影响评估」章节，不连接任何真实服务。用法：python -m geval run --config config.smoke.json --smoke",
+  "_说明_2": "这里的 5 个 mock 模型是自检夹具，不代表当前运行对象；实际评测配置见 config.json（单模型 llm-chat-core）。",
   "_模拟设定": "post 模型的 accuracy 略低于 pre，用于模拟灾难性遗忘，验证报告能否正确判定「显著退化」。",
   "run_name": "smoke",
   "output_dir": "runs",

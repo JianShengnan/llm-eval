@@ -1,7 +1,8 @@
 {
-  "_说明_1": "通用能力评测配置。被测对象共 5 个：盘古7B 微调前/后、Qwen8B 微调前/后、Qwen3-32B。",
-  "_说明_2": "阶段 1（微调前）：python -m geval run --config config.json --models pangu7b-pre,qwen8b-pre,qwen3-32b",
-  "_说明_3": "阶段 1.5（微调后）：微调完成后直接跑全量，config 里 5 个模型都已定义：python -m geval run --config config.json --resume",
+  "_说明_0": "这是可选的 5 对象评测模板，不是当前默认配置；当前实际运行配置见 config.json（单模型 llm-chat-core）。使用时建议另存为 config.5objects.json，避免覆盖当前配置。",
+  "_说明_1": "5 对象模板：被测对象共 5 个 —— 盘古7B 微调前/后、Qwen8B 微调前/后、Qwen3-32B。",
+  "_说明_2": "阶段 1（微调前）：python -m geval run --config config.5objects.json --models pangu7b-pre,qwen8b-pre,qwen3-32b",
+  "_说明_3": "阶段 1.5（微调后）：微调完成后直接跑全量，本模板里 5 个模型都已定义：python -m geval run --config config.5objects.json --resume",
   "_说明_4": "base_url / model 都是占位值，务必改成你实际部署的地址与模型名。",
   "_说明_5": "qwen3-32b 走 reqbody_gateway：现网网关要求整个请求体包在 reqBody 里、鉴权放 body 内（实现见 geval/reqbody_gateway.py）。user_suffix 会追加到 user 消息末尾，如 Qwen3 的 /no_think；网关是否支持 logprobs / completions 未知，故关掉 logprobs。",
   "_说明_5b": "网关/现网通道必须设 rate_limit_qps（单进程自我限流，如 1~2）并把 concurrency 调到 1~2。多进程同时跑多个任务时，叠加的并发会远超网关配额，表现为大面积 429/超时——此时请串行跑任务，别并行起进程。",
@@ -90,14 +91,23 @@
   ],
 
   "_说明_协议": "ceval 起三个 tag 做 prompt 协议消融：fewshot / direct / loglikelihood，用来回答「小模型该用哪种问法」。",
+  "_说明_权重": "综合分默认全任务等权，与历史口径一致。写了 dimension_weights + 任务条目的 dimension 才切到加权：同维度内多任务平分该维度份额；dimension 写 null = 只做专项诊断不计入综合分；单项想脱离平分就显式写 weight。也可用 --weights 命令行临时覆盖（只改报告，不用重跑）。",
+
+  "dimension_weights": {
+    "chinese": 0.35,
+    "reasoning": 0.30,
+    "instruction": 0.30,
+    "math": 0.05
+  },
+
   "tasks": [
-    { "name": "ceval", "tag": "ceval-fewshot", "split": "val", "num_fewshot": 5, "protocol": "fewshot", "mode": "gen" },
-    { "name": "ceval", "tag": "ceval-direct", "split": "val", "num_fewshot": 0, "protocol": "direct", "mode": "gen" },
-    { "name": "ceval", "tag": "ceval-likelihood", "split": "val", "num_fewshot": 5, "mode": "loglikelihood", "primary": "acc_norm" },
-    { "name": "cmmlu", "split": "test", "num_fewshot": 5, "protocol": "fewshot", "mode": "gen" },
-    { "name": "gsm8k", "split": "test", "num_fewshot": 4, "mode": "gen" },
-    { "name": "bbh", "split": "test", "num_fewshot": 0, "protocol": "answer_line", "mode": "gen" },
-    { "name": "ifeval", "split": "test", "num_fewshot": 0, "mode": "gen" },
-    { "name": "json_schema", "split": "test", "num_fewshot": 0, "mode": "gen", "strict_json": true }
+    { "name": "ceval", "tag": "ceval-fewshot", "split": "val", "num_fewshot": 5, "protocol": "fewshot", "mode": "gen", "dimension": "chinese" },
+    { "name": "ceval", "tag": "ceval-direct", "split": "val", "num_fewshot": 0, "protocol": "direct", "mode": "gen", "dimension": null },
+    { "name": "ceval", "tag": "ceval-likelihood", "split": "val", "num_fewshot": 5, "mode": "loglikelihood", "primary": "acc_norm", "dimension": null },
+    { "name": "cmmlu", "split": "test", "num_fewshot": 5, "protocol": "fewshot", "mode": "gen", "dimension": "chinese" },
+    { "name": "gsm8k", "split": "test", "num_fewshot": 4, "mode": "gen", "dimension": "math" },
+    { "name": "bbh", "split": "test", "num_fewshot": 0, "protocol": "answer_line", "mode": "gen", "dimension": "reasoning" },
+    { "name": "ifeval", "split": "test", "num_fewshot": 0, "mode": "gen", "dimension": "instruction" },
+    { "name": "json_schema", "split": "test", "num_fewshot": 0, "mode": "gen", "strict_json": true, "dimension": null }
   ]
 }

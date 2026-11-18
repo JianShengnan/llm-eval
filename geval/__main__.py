@@ -64,7 +64,7 @@ def _split(value: Optional[str]) -> Optional[List[str]]:
 def cmd_list_tasks(args: argparse.Namespace) -> int:
     kinds = tk.task_kinds()
     print(f"geval {__version__} — 内置任务\n")
-    print(f"{'任务':<14}{'类型':<10}{'默认 few-shot':<14}{'默认切分':<10}覆盖能力")
+    print(f"{'任务':<16}{'类型':<10}{'默认 few-shot':<14}{'默认切分':<10}覆盖能力")
     print("-" * 78)
     coverage = {
         "ceval": "中文语言理解 / 学科知识",
@@ -79,11 +79,12 @@ def cmd_list_tasks(args: argparse.Namespace) -> int:
         "ifeval": "指令遵循（规则化判定，无需裁判模型）",
         "json_schema": "结构化输出：意图 + 槽位（与业务最贴近）",
         "intent_json": "同 json_schema，适合放你自己的业务意图数据集",
+        "intent_routing": "专业能力：语音导航意图树路由（含小模型基线与混淆矩阵）",
     }
     for name in sorted(tk.TASK_REGISTRY):
         cls = tk.TASK_REGISTRY[name]
         print(
-            f"{name:<14}{kinds[name]:<10}{tk.DEFAULT_FEWSHOT.get(name, 0):<14}"
+            f"{name:<16}{kinds[name]:<10}{tk.DEFAULT_FEWSHOT.get(name, 0):<14}"
             f"{getattr(cls, 'default_split', 'test'):<10}{coverage.get(name, '')}"
         )
     print("\n提示：同一任务可用 tag 起别名，以对比不同 prompt 协议，例如")
@@ -565,7 +566,10 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         except Exception as exc:  # noqa: BLE001
             item("warn", f"探活失败：{type(exc).__name__}: {exc}")
     elif models:
-        next_steps.append("python3 -m geval probe --config config.json   # 确认三个端点可用")
+        next_steps.append(
+            f"python3 -m geval probe --config {args.config or 'config.json'}   "
+            f"# 确认 {len(models)} 个端点可用"
+        )
 
     # ---------------- 4. 数据集 ----------------
     head("4. 数据集")
@@ -709,6 +713,28 @@ def _print_leaderboard(summary: Dict[str, Dict[str, Dict[str, Any]]]) -> None:
         print(pad(mid, width) + "".join(cells))
 
 
+def _parse_weights(spec: Optional[str]) -> Optional[Dict[str, float]]:
+    """解析 --weights "chinese=0.35,bbh=0.3,ifeval=0.3,gsm8k=0.05,json_schema=0"。"""
+    if not spec:
+        return None
+    out: Dict[str, float] = {}
+    for part in spec.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "=" not in part:
+            raise SystemExit(f"--weights 格式错误：{part}（应为 key=权重，如 chinese=0.35）")
+        k, v = part.split("=", 1)
+        k = k.strip()
+        try:
+            out[k] = float(v.strip())
+        except ValueError:
+            raise SystemExit(f"--weights 权重不是数字：{part}")
+    if not out:
+        return None
+    return out
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     run_dir = args.run
     if not run_dir:
@@ -723,7 +749,8 @@ def cmd_report(args: argparse.Namespace) -> int:
             raise SystemExit("runs 目录下没有可用的运行结果")
         run_dir = os.path.join(out_dir, candidates[-1])
         print(f"未指定 --run，使用最近一次运行：{run_dir}")
-    paths = rp.build_report(run_dir, baseline=args.baseline, pairs=args.pairs)
+    weights = _parse_weights(getattr(args, "weights", None))
+    paths = rp.build_report(run_dir, baseline=args.baseline, pairs=args.pairs, weights=weights)
     print(f"报告已生成：\n  {paths['html']}\n  {paths['markdown']}")
     return 0
 
@@ -758,6 +785,7 @@ def cmd_merge_runs(args: argparse.Namespace) -> int:
             baseline=args.baseline,
             pairs=args.pairs,
             make_report=not args.no_report,
+            weights=_parse_weights(getattr(args, "weights", None)),
         )
     except ValueError as exc:
         raise SystemExit(f"合并失败：{exc}")
@@ -1103,6 +1131,11 @@ def build_parser() -> argparse.ArgumentParser:
     rp_.add_argument("--run", help="run 目录（默认取 runs 下最近一次）")
     rp_.add_argument("--baseline", help="基线模型 id")
     rp_.add_argument("--pairs", help="配对对比，格式 a:b,c:d（用于微调前后对比）")
+    rp_.add_argument(
+        "--weights",
+        help="综合分权重覆盖，如 chinese=0.35,reasoning=0.3,instruction=0.3,math=0.05,"
+        "json_schema=0（key 可为维度名 / task_key / 数据集名；只改报告口径，不需要重跑）",
+    )
     rp_.set_defaults(func=cmd_report)
 
     mg = sub.add_parser("merge-runs", help="合并多个 run 目录（分批并行跑完后汇总出一张总表）")
@@ -1111,6 +1144,10 @@ def build_parser() -> argparse.ArgumentParser:
     mg.add_argument("--run-name", help="合并后的目录名（默认 merged-<时间戳>）")
     mg.add_argument("--baseline", help="报告基线模型 id（默认取源配置的 report.baseline）")
     mg.add_argument("--pairs", help="配对对比，格式 a:b,c:d")
+    mg.add_argument(
+        "--weights",
+        help="综合分权重覆盖，如 chinese=0.35,reasoning=0.3,instruction=0.3,math=0.05,json_schema=0",
+    )
     mg.add_argument("--no-report", action="store_true", help="只合并，不生成报告")
     mg.set_defaults(func=cmd_merge_runs)
 

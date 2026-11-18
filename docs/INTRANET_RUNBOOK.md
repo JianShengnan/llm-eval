@@ -2,7 +2,8 @@
 
 > 适用：内网 Linux（ARM64 / x86_64 均可）离线环境
 > 框架：`geval`（本目录），**运行时零第三方依赖，无需 pip、无需外网**
-> 被测对象：盘古7B、Qwen8B、Qwen3-32B（微调后补测则共 5 个）
+> 被测对象：当前实际配置为单模型 `llm-chat-core`（6 个任务）。
+> 5 对象模板（盘古7B / Qwen8B 的 pre、post + Qwen3-32B）见 `config.example.json`，属于可选流程。
 
 ---
 
@@ -10,7 +11,7 @@
 
 | 项目 | 说明 |
 | :--- | :--- |
-| **做什么** | 对已服务化的三个模型跑统一题集，产出可比的能力矩阵与时延数据 |
+| **做什么** | 对配置中的模型通道跑统一题集，产出可比的能力矩阵与时延数据 |
 | **产出什么** | `report.html`（自包含单文件，可直接发群）、`report.md`、逐样本明细 JSONL、`summary.json` |
 | **要不要外网** | **不要。** 框架本身零依赖；数据集需事先转成 JSONL 拷进来 |
 | **要不要 pip** | **不要**（除非额外装 lm-eval，见附录 A） |
@@ -28,7 +29,7 @@
 | 1 | Python 版本 | ≥ 3.9（实测 3.13；3.11 亦可） | `python3 -V` |
 | 2 | 工作目录 | 已拷贝 `llm-general-eval/` 整个目录 | `ls` |
 | 3 | 写权限 | 工作目录可写（要生成 `runs/`、`.cache/`） | `touch .wtest && rm .wtest` |
-| 4 | 模型端点可达 | 三个 OpenAI 兼容端点 | `curl -s http://127.0.0.1:8001/v1/models` |
+| 4 | 模型端点可达 | 配置中的 OpenAI 兼容端点（当前 1 个） | `curl -s <base_url>/models` |
 | 5 | **环境变量无代理** | `HTTP_PROXY` 必须为空 | `env | grep -i proxy` |
 | 6 | 磁盘空间 | 建议 ≥ 2 GB（明细 JSONL + 缓存） | `df -h .` |
 
@@ -57,18 +58,18 @@ python3 -m geval doctor --config config.json
 [OK] Python 3.11.9（需 ≥ 3.9）
 [OK] 在项目根目录执行（geval 可正常导入）
 ── 2. 框架自检 ──────────────────────────────────────────────
-[OK] 运行时依赖：无（零第三方依赖），标准库模块 23 个
+[OK] 运行时依赖：无（零第三方依赖），标准库模块 25 个   ← 数量随 Python 版本略有差异
 [OK] 离线自检通过（7 个任务、抽取层、acc/acc_norm、退化判定、续跑、报告生成）
 ── 3. 配置与模型端点 ────────────────────────────────────────
-[OK] 配置已加载 config.json：5 个模型、8 个任务条目
-[OK] 5 个真实模型都填了 base_url 与 model
+[OK] 配置已加载 config.json：1 个模型、6 个任务条目
+[OK] 1 个真实模型都填了 base_url 与 model
 [警告] 检测到代理环境变量 ['HTTP_PROXY']
        → unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
 ── 4. 数据集 ────────────────────────────────────────────────
 [OK] json_schema：16 条  ←  datasets/json_schema/test.jsonl
-[警告] 7/8 个任务的数据集缺失 → 见下方「数据集准备」
+[OK] 全部 6 个任务的数据集就绪
 ── 5. lm-eval 离线锚点（可选） ──────────────────────────────
-[OK] ./venv：Python 3.11.9，lm-eval 0.4.13，datasets 已装
+[OK] ./venv：Python 3.11.9，lm-eval 0.4.13，datasets 已装   ← 仅当项目内已建 venv
 ```
 
 **退出码 0 = 无阻塞，可以开跑；1 = 有阻塞项，先按提示修复。**
@@ -214,11 +215,17 @@ python3 -m geval selftest            # 期望全 PASS
 
 ## 3. 配置
 
-### 3.1 复制配置模板
+### 3.1 确认当前配置（不要直接覆盖）
+
+当前仓库已带 `config.json`（单模型 `llm-chat-core`、6 个任务），直接改它的模型段即可。
+**不要**用 `config.example.json` 覆盖它 —— 那是一份 5 对象模板；只有启用模板流程时才复制：
 
 ```bash
-cp config.example.json config.json
+cp config.example.json config.5objects.json
 ```
+
+> ⚠️ `config.json` 内含真实网关地址与 `api_key`，已在 `.gitignore` 中排除，**不要提交**。
+> 外发或打包前先确认增量包里没有它（`scripts/pack_bundle.py` 已排除）。
 
 ### 3.2 必须修改的几处
 
@@ -226,11 +233,11 @@ cp config.example.json config.json
 
 ```json
 {
-  "id": "pangu7b-pre",
-  "label": "盘古7B（微调前）",
-  "base_url": "http://127.0.0.1:8001/v1",   ← 改成实际地址与端口
-  "api_key": "EMPTY",                        ← 服务端未开鉴权就保持 EMPTY
-  "model": "pangu-7b-instruct"               ← 必须与 vLLM 加载的模型名完全一致
+  "id": "llm-chat-core",
+  "label": "llm-chat-core",
+  "base_url": "http://<实际地址>/v1",   ← 改成实际地址与端口
+  "api_key": "EMPTY",                   ← 服务端未开鉴权就保持 EMPTY
+  "model": "llm-chat-core"              ← 必须与服务端加载的模型名完全一致
 }
 ```
 
@@ -252,8 +259,10 @@ Qwen3 系列需要关掉思考模式，模板里已配好：
 | `retries` | 3 | 传输层重试次数（429/5xx/超时自动退避重试） |
 | `proxy` | `bypass` | **保持 bypass**；内网不要跟随环境变量 |
 | `seed` | 42 | 抽样随机种子，影响分层抽样的选样。**多次运行必须一致** |
-| `report.baseline` | `qwen3-32b` | 配对显著性检验的对照模型 |
-| `report.pairs` | 两对 pre/post | 微调影响评估的配对，阶段 1 无 post 模型时会自动跳过 |
+| `rate_limit_qps` | 不设 | 单进程自我限流；网关/现网通道建议 1~2，否则多进程叠加会打爆配额 |
+| `dimension_weights` | 不设 | 综合分维度权重；需配合任务条目的 `dimension`。当前 `config.json` 已配置 |
+| `report.baseline` | 5 对象模板为 `qwen3-32b` | 配对显著性检验的对照模型；单模型时该章节自动跳过 |
+| `report.pairs` | 模板为两对 pre/post | 微调影响评估的配对，无 post 模型时会自动跳过 |
 
 ---
 
@@ -266,7 +275,7 @@ Qwen3 系列需要关掉思考模式，模板里已配好：
 仓库里已带一套意图+槽位示例数据集，可以立刻跑通：
 
 ```bash
-python3 -m geval run --config config.json --smoke --limit 8 --models pangu7b-pre,qwen8b-pre,qwen3-32b
+python3 -m geval run --config config.json --smoke --limit 8
 ```
 
 `--smoke` 会允许缺失的数据集回退到内置合成数据，**目的只是验证端到端接线**
@@ -321,9 +330,9 @@ python3 scripts/prepare_datasets.py --task ifeval --out datasets/ifeval --split 
 
 ```bash
 python3 -m geval doctor --config config.json --no-selftest    # 先看有无阻塞
-python3 -m geval probe --config config.json --models qwen3-32b
+python3 -m geval probe --config config.json
 python3 -m geval run --config config.json --smoke --limit 8 \
-    --models qwen3-32b --run-name single-check
+    --run-name single-check
 ```
 
 这一步验证的是**工具链**：端点可达、鉴权正确、`model` 名对得上、
@@ -339,7 +348,7 @@ python3 -m geval run --config config.json --smoke --limit 8 \
 仓库里 `datasets/json_schema/` 带了 16 条真实风格的意图+槽位样本，开箱即用：
 
 ```bash
-python3 -m geval run --config config.json --models qwen3-32b \
+python3 -m geval run --config config.json \
     --tasks json_schema --run-name single-check
 ```
 
@@ -349,13 +358,13 @@ python3 -m geval run --config config.json --models qwen3-32b \
 **梯度 3 · 真实公开基准（需先按 §4 路径 B 准备 JSONL）**
 
 ```bash
-python3 -m geval count --config config.json --models qwen3-32b --p50-ms <实测单请求毫秒>
-python3 -m geval run --config config.json --models qwen3-32b --limit 40 --resume
+python3 -m geval count --config config.json --p50-ms <实测单请求毫秒>
+python3 -m geval run --config config.json --limit 40 --resume
 ```
 
 > **这一步的价值是验证链路，不是评价模型。**
 > 单通道跑出来的数字**不要用来做选型结论** —— 它只证明工具链没问题。
-> 等三个（或五个）通道都就绪，用同一套配置重跑，那时的对比才有意义。
+> 等多个通道（或启用 5 对象模板）就绪后，用同一套题目重跑，那时的对比才有意义。
 >
 > 另外务必加 `--run-name single-check` 单独存放，
 > 避免以后正式评测时与这次的结果混在一起（`--resume` 是按样本 id 跳过的，
@@ -376,21 +385,21 @@ python3 -m geval probe --config config.json
 **预期输出**：
 
 ```
-[OK ] 盘古7B（微调前）  http://127.0.0.1:8001/v1
-        时延 312.4 ms ｜ 服务端模型名 pangu-7b-instruct ｜ 样例输出 '好'
+[OK ] llm-chat-core  http://<实际地址>/v1
+        时延 312.4 ms ｜ 服务端模型名 llm-chat-core ｜ 样例输出 '好'
 
-3/3 个模型可用
+1/1 个模型可用
 ```
 
 失败时的处理见第 7 节。
 
-> 阶段 1 期间，配置里的两个「微调后」端点尚不存在，探活会失败 —— 这是**正常的**，
-> 只要阶段 1 要用的三个是 OK 即可。
+> 若改用 5 对象模板（`config.5objects.json`），阶段 1 期间两个「微调后」端点尚不存在，
+> 探活会失败 —— 这是**正常的**，只要阶段 1 要用的三个是 OK 即可。
 
 ### 5.3 第 2 步 · 冒烟（合成数据，验证接线）
 
 ```bash
-python3 -m geval run --config config.json --smoke --limit 8 --models pangu7b-pre,qwen8b-pre,qwen3-32b
+python3 -m geval run --config config.json --smoke --limit 8
 ```
 
 看两件事：
@@ -402,27 +411,34 @@ python3 -m geval run --config config.json --smoke --limit 8 --models pangu7b-pre
 ### 5.4 第 3 步 · 用量预估（不发请求）
 
 ```bash
-python3 -m geval count --config config.json --models pangu7b-pre,qwen8b-pre,qwen3-32b --p50-ms <实测单请求毫秒>
+python3 -m geval count --config config.json --p50-ms <实测单请求毫秒>
 ```
 
-**预期输出**：
+**预期输出**（当前单模型 6 任务，实测值）：
 
 ```
 任务                 打分模式              样本数    请求/样本   模型数      总请求
-ceval-fewshot       gen                  1346          1       3        4038
-ceval-likelihood    loglikelihood        1346          4       3       16152
-cmmlu               gen                 11582          1       3       34746
-...
+ceval-fewshot       gen                     1337          1       1        1337
+cmmlu               gen                    11408          1       1       11408
+gsm8k               gen                     1319          1       1        1319
+bbh                 gen                     5268          1       1        5268
+ifeval              gen                      541          1       1         541
+json_schema         gen                       16          1       1          16
 
-按单请求 500 ms、并发 8 估算：约 87.3 分钟
+时长估算：用实测单请求时延代入 —— 总请求 19889 × 时延(秒) ÷ 并发 8
+          例：单请求 0.5 s、并发 8 → 约 20.7 分钟
 ```
+
+> **样本数与 `doctor` 为什么不一样？** `doctor` 报的是 JSONL 原始条数
+> （ceval 1346 / cmmlu 11582 / bbh 6511），`count` 报的是**题面去重后**实际要发的条数
+> （ceval 1337 / cmmlu 11408 / bbh 5268）。评测以 `count` 为准。
 
 先看这个数字再决定跑不跑全量。
 
 ### 5.5 第 4 步 · 抽样评测（分层抽样，看排序）
 
 ```bash
-python3 -m geval run --config config.json --limit 40 --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
+python3 -m geval run --config config.json --limit 40 --resume
 ```
 
 `--limit 40` 按 `subject` 分层等比抽样，每任务约 40 条，成本约为全量的 3%，
@@ -431,28 +447,30 @@ python3 -m geval run --config config.json --limit 40 --models pangu7b-pre,qwen8b
 ### 5.6 第 5 步 · 全量正式评测
 
 ```bash
-python3 -m geval run --config config.json --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
+python3 -m geval run --config config.json --resume
 ```
 
 `--resume` 会跳过已完成的样本，所以第 4 步跑过的部分不会重复消耗。
 
-**阶段 1 到此结束。** 报告位置：
+**当前单模型评测到此结束。** 报告位置：
 
 ```
-runs/geval-general-5objects/report.html
+runs/geval-llm-chat-core/report.html
 ```
 
-### 5.7 阶段 1.5（微调完成后补测）
+### 5.7 可选模板：阶段 1.5（微调完成后补测）
 
-1. 启动微调后的两个模型服务，端口与 `config.json` 里的 `pangu7b-post` / `qwen8b-post` 一致
+> 仅适用于 5 对象模板 `config.5objects.json`；当前单模型 `config.json` 没有 post 通道，跳过本节。
+
+1. 启动微调后的两个模型服务，端口与 `config.5objects.json` 里的 `pangu7b-post` / `qwen8b-post` 一致
 2. **确认微调没有改动 `chat_template`**（见第 7 节最后一条，这是最容易踩的坑）
 3. 跑全量（新模型执行，已完成的三个自动跳过）：
 
 ```bash
-python3 -m geval run --config config.json --resume
+python3 -m geval run --config config.5objects.json --resume
 ```
 
-报告第 4 节会自动产出「微调影响评估」：逐任务的 pre→post 差值、
+报告里的「微调影响评估」一节会自动产出：逐任务的 pre→post 差值、
 95% 置信区间、McNemar p 值，以及**显著退化 / 显著提升 / 不显著**的判定。
 
 ### 5.8 可选：确认数字可信（与 lm-eval 交叉验证）
@@ -466,17 +484,22 @@ export HF_DATASETS_OFFLINE=1 HF_HUB_OFFLINE=1
 unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
 
 # 2) lm-eval 跑一个小子集（注意用 local-completions，否则拿不到 acc_norm）
+#    下面以当前单模型 llm-chat-core 为例；5 对象模板换成 pangu-7b-instruct 与对应 base_url
 lm_eval --model local-completions \
-  --model_args model=pangu-7b-instruct,base_url=http://127.0.0.1:8001/v1/completions,num_concurrent=8 \
+  --model_args model=llm-chat-core,base_url=http://<实际地址>/v1/completions,num_concurrent=8 \
   --tasks ceval-valid --num_fewshot 5 --limit 200 \
-  --output_path ./lmeval_out/pangu7b-200
+  --output_path ./lmeval_out/llm-chat-core-200
 
 # 3) geval 跑同一批量级，口径对齐
-python3 -m geval run --config config.json --tasks ceval-likelihood --limit 200 --models pangu7b-pre
+python3 -m geval run --config config.json --tasks ceval --limit 200
 ```
 
+> `--tasks` 只匹配任务的 **`name`**（不含 `tag`）。`ceval-likelihood` 是
+> `name=ceval` 的 tag 变体，写 `--tasks ceval` 会把该 name 下的所有变体一起跑；
+> 只想跑某一个变体，请在配置里删掉其它 ceval 条目或另存一份 config。
+
 **怎么判断**：两边的 ceval 准确率差值通常在 **1~3 个百分点**内（模板细节差异所致）。
-差值稳定 → geval 的实现可信，后续阶段 1.5 / 阶段 4 可以放心只看相对变化，不必每次跑 lm-eval。
+差值稳定 → geval 的实现可信，后续配对对比与专业能力测评可以放心只看相对变化，不必每次跑 lm-eval。
 
 如果差值超过 5 个点，优先怀疑三件事，按顺序排查：
 
@@ -506,12 +529,13 @@ python3 -m geval run --config config.json --tasks ceval-likelihood --limit 200 -
 | cmmlu | ~11.6 千 | **全量最大的一项** |
 | mmlu / mmlu_pro | 万级 | 如需跨语言对照再开 |
 | gsm8k | ~1.3 千 | |
-| bbh | ~6.7 千 | 27 个子任务 |
+| bbh | ~6.5 千 | 27 个子任务 |
 | ifeval | ~541 | |
 | json_schema | 自建 | 用你自己的业务数据 |
 
-**降本建议**：`ceval-likelihood` 单独用 `--limit 200` 抽样跑，
-得到与 lm-eval 对齐的 acc/acc_norm 即可；全量仍用 `gen` 模式。
+**降本建议**：需要与 lm-eval 对齐的 acc/acc_norm 时，把对应选择题任务切成
+`loglikelihood` 模式并单独用 `--limit 200` 抽样跑（如模板里的 `ceval-likelihood`）；
+全量仍用 `gen` 模式。
 
 ---
 
@@ -552,8 +576,8 @@ python3 -c "import json;print(json.load(open('模型目录/tokenizer_config.json
 | 场景 | 操作 |
 | :--- | :--- |
 | 中途被中断（Ctrl+C / 掉线） | 重新执行原命令并加 `--resume`，自动跳过已完成样本 |
-| 只想重跑某个任务 | 覆盖到具体任务：`--tasks ceval-fewshot,gsm8k` |
-| 只想重跑某个模型 | `--models pangu7b-pre` |
+| 只想重跑某个任务 | `--tasks ceval,gsm8k`（匹配 `name`；同名 tag 变体会一起跑） |
+| 只想重跑某个模型 | `--models llm-chat-core`（5 对象模板用 `--models pangu7b-pre` 等） |
 | 从头重跑 | 先 `rm -rf runs/<run_name>` 去掉 `--resume` |
 | 结果给他人查看 | 直接发 `report.html`（单文件、无外部引用） |
 | 结果需要归档 | `tar czf result.tar.gz runs/<run_name>` |
@@ -576,7 +600,7 @@ runs/<run_name>/
 ├── report.md              ← 同内容 Markdown，便于贴进文档系统
 ├── summary.json           ← 全部聚合结果（给下游程序消费）
 ├── manifest.json          ← 运行指纹（复现依据）
-├── config.json            ← 本次生效的配置快照
+├── config.json            ← 本次生效的配置快照（`api_key` 已打码为 `***`）
 └── <模型 id>/
     ├── <任务>.jsonl              ← 逐样本明细（含原始输出，用于人工复核错例）
     └── <任务>.summary.json       ← 该任务该模型的聚合结果
@@ -584,15 +608,22 @@ runs/<run_name>/
 
 `report.html` 的章节：
 
-| 章节 | 内容 |
+| 章节（按标题定位） | 内容 |
 | :--- | :--- |
 | 1 准确率矩阵 | 模型 × 任务，带 bootstrap 95% 置信区间 |
-| 2 综合与时延 | 宏平均、时延 p50/p95、准确率-时延帕累托图 |
-| 3 配对显著性检验 | 与基线逐任务的差值、CI、McNemar p 值 |
-| 3b 微调影响评估 | pre→post 差值与退化判定（有 post 模型时才出现） |
-| 4 解析质量 | 解析失败率、抽取策略分布 |
-| 5 结构化输出专项 | JSON 可解析率 / Schema 通过率 / 意图准确率 / 槽位一致率 |
-| 6 复现信息 | 数据集指纹、运行期错误 |
+| 2 综合表现与时延 | 综合分（有 `dimension_weights` 时为加权，否则等权宏平均）、时延 p50/p95、准确率-时延帕累托图 |
+| 3 与基线的配对显著性检验 | 与基线逐任务的差值、CI、McNemar p 值（单模型时输出跳过说明） |
+| 4 微调影响评估 | pre→post 差值与退化判定（仅当配置了 `report.pairs` 且两端都有结果） |
+| 5 解析质量与抽取策略分布 | 解析失败率、抽取策略分布 |
+| 6 续写似然打分 | `acc` / `acc_norm` 对照（仅当有 `loglikelihood` 结果） |
+| 7 结构化输出专项 | JSON 可解析率 / Schema 通过率 / 意图准确率 / 槽位一致率 |
+| 8 指令遵循专项 | 样本级 / 指令级通过率与未覆盖类型（仅当有 `ifeval`） |
+| 9 分组明细 | 按 subject 定位短板（前 20 组） |
+| 10 错例抽样 | 人工复核用 |
+| 11 复现信息 | 数据集指纹、运行期错误、client_stats |
+
+> **章节号是动态的**：3/4/6/7/8 为可选章节，缺失时后续编号前移。
+> 引用报告内容请按标题定位，不要写死「第 4 节」。
 
 **结果解读的一条纪律**：不要只看准确率小数点。
 只有置信区间不跨 0 且 `McNemar p < 0.05` 的差距才可作为结论。
@@ -611,25 +642,30 @@ python3 -m geval list-tasks                             # 内置任务清单
 # 准备与检查
 python3 -m geval preview --task json_schema             # 看实际下发的 prompt
 python3 -m geval probe   --config config.json           # 端点探活
-python3 -m geval probe   --config config.json --models qwen3-32b   # 只探活手上已有的通道
+python3 -m geval probe   --config config.json --models llm-chat-core  # 只探活指定通道
 python3 -m geval count   --config config.json           # 用量预估（不发请求）
 
 # 只有 1 个通道时的联通性验证（详见 §5.0）
 python3 -m geval run --config config.json --smoke --limit 8 \
-    --models qwen3-32b --run-name single-check
-python3 -m geval run --config config.json --models qwen3-32b \
+    --run-name single-check
+python3 -m geval run --config config.json \
     --tasks json_schema --run-name single-check
 
-# 执行
-python3 -m geval run --config config.json --smoke --limit 8 --models A,B,C   # 冒烟
-python3 -m geval run --config config.json --limit 40 --models A,B,C --resume # 抽样
-python3 -m geval run --config config.json --models A,B,C --resume            # 全量
-python3 -m geval run --config config.json --resume                           # 阶段 1.5（5 个模型）
+# 执行（当前单模型 config.json）
+python3 -m geval run --config config.json --smoke --limit 8       # 冒烟
+python3 -m geval run --config config.json --limit 40 --resume    # 抽样
+python3 -m geval run --config config.json --resume               # 全量
+python3 -m geval run --config config.json --resume --retry-failed # 限流后补跑失败样本
+
+# 执行（可选 5 对象模板 config.5objects.json）
+python3 -m geval run --config config.5objects.json --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
+python3 -m geval run --config config.5objects.json --resume
 
 # 报告
 python3 -m geval report --run runs/<run_name>                                # 重新生成
-python3 -m geval report --run runs/<run_name> --baseline qwen3-32b           # 指定基线
+python3 -m geval report --run runs/<run_name> --baseline qwen3-32b           # 指定基线（模板口径）
 python3 -m geval report --run runs/<run_name> --pairs pangu7b-pre:pangu7b-post
+python3 -m geval report --run runs/<run_name> --weights chinese=0.35,reasoning=0.3,instruction=0.3,math=0.05,json_schema=0
 
 # 版本核对（拿到新源码包后，详见 §2.4）
 python3 scripts/verify_install.py                # 0=一致，1=需更新

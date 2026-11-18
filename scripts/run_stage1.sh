@@ -9,7 +9,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PY="${PY:-python3}"
-CFG="${CFG:-config.json}"
+CFG="${CFG:-config.5objects.json}"
 PRE_MODELS="${PRE_MODELS:-pangu7b-pre,qwen8b-pre,qwen3-32b}"
 # 同一模型内并行跑几个数据集。总并发 = PARALLEL_TASKS × concurrency。
 # 数据集量大时（CMMLU/BBH 上万条）调到 2~4 可显著缩短墙钟时间，
@@ -17,7 +17,8 @@ PRE_MODELS="${PRE_MODELS:-pangu7b-pre,qwen8b-pre,qwen3-32b}"
 PARALLEL_TASKS="${PARALLEL_TASKS:-1}"
 
 if [[ ! -f "$CFG" ]]; then
-  echo "找不到 $CFG；先执行： cp config.example.json config.json  然后填好模型地址" >&2
+  echo "找不到 $CFG；先执行： cp config.example.json config.5objects.json  然后填好 5 个通道的地址" >&2
+  echo "（单模型流程请不要用本脚本，直接按 README §1 的顺序执行）" >&2
   exit 1
 fi
 

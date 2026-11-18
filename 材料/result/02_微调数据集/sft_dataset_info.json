@@ -1,0 +1,56 @@
+{
+  "generator": "build_sft_dataset.py",
+  "seed": 20261116,
+  "tree_mode": "full",
+  "per_node": 2,
+  "include_eval_generated": true,
+  "eval_included_in_default_files": false,
+  "n_records": 1072,
+  "splits": {
+    "train": 841,
+    "dev": 102,
+    "test": 129
+  },
+  "label_coverage_per_split": {
+    "train": 388,
+    "dev": 49,
+    "test": 63
+  },
+  "covered_tree_nodes": 497,
+  "uncovered_tree_nodes": [
+    "NULL"
+  ],
+  "total_tree_nodes": 498,
+  "node_coverage_pct": 99.8,
+  "source_type_counts": {
+    "real_noise": 60,
+    "synthetic_template": 962,
+    "synthetic_oral": 30,
+    "synthetic_ood": 20
+  },
+  "real_labeled_samples": 0,
+  "real_labeled_labels": 0,
+  "real_noise_samples": 60,
+  "unlabeled_invalid_user_rows": 549,
+  "remaining_valid_labeled_rows_before_session_isolation": 7,
+  "synthetic_template_samples": 962,
+  "synthetic_oral_samples": 30,
+  "synthetic_ood_samples": 20,
+  "avg_prompt_chars": 6123.0,
+  "checks": {
+    "all_labels_in_tree": true,
+    "messages_shape_ok": true,
+    "no_eval_source_row": true,
+    "no_eval_utterance": true,
+    "no_group_cross_split": true,
+    "no_empty_utterance": true
+  },
+  "checks_all_pass": true,
+  "sha256": {
+    "sft_train.jsonl": "730235eaab1dab6d77b19cc9f1ece5c5dbf4805e640428923b28f3ca3a0f8d32",
+    "sft_dev.jsonl": "e21d383efa7c97339f98f6f61a8f2d9114cce60d166832b96217e58adb36f0a9",
+    "sft_test.jsonl": "c510d0fe7df920213f0cd0d4f6182d5665277f25865f4ac07189071a8f30b39f"
+  },
+  "eval_source_sha256": "1953c97b0e95eae7deb31f9e91dd3b074b9c05cff0966d9eb49d664be0973ba2",
+  "note": "严格隔离版：不含冻结评测集任何样本，也不含其出现过的会话。"
+}

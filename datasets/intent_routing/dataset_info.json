@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-11-10T19:23:38",
+  "source_path": "D:\\工作\\文件\\模型评测\\语音导航意图识别评测数据集.jsonl",
+  "source_sha256": "7e902bf7dc9f83adf561a287348b3646801bde8dca22764f37336a1911057db0",
+  "n_records": 432,
+  "n_labels": 495,
+  "n_paths": 498,
+  "task": "intent_routing",
+  "split": "test",
+  "field_mapping": {
+    "question": "prompt",
+    "answer": "ground_truth",
+    "subject": "sample_type"
+  },
+  "note": "test 集已冻结；同一份数据不得进入训练集或 few-shot 示例。"
+}

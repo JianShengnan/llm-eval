@@ -24,7 +24,7 @@
 
 **为什么当时选择自建**：目标环境是内网 Linux ARM64、无外网、无 pip 源，
 加之你此前在 TOMP 项目上确立过「零第三方依赖、拷目录即可部署」的工程标准。
-geval 运行时只依赖 20 个标准库模块（`scripts/verify_deps.py` 可验证）。
+geval 运行时只依赖标准库（本机实测 25 个模块，随 Python 版本略有差异，`scripts/verify_deps.py` 可验证）。
 
 > **⚠️ 修正（同日）**：你后续澄清**依赖可以从外网下载后导入内网**。
 > 因此「离线」这条理由**不再成立**，上面的取舍依据已被推翻。
@@ -186,7 +186,9 @@ export HF_DATASETS_OFFLINE=1 HF_HUB_OFFLINE=1
   --output_path ./lmeval_out/<模型名>
 
 # ⑤ 同批样本用 geval 对齐口径
-python -m geval run --config config.json --tasks ceval-likelihood --limit 200
+#    --tasks 只匹配 name，不含 tag；想只跑 loglikelihood 变体，
+#    请在配置里只保留那一条 ceval 条目（或另存一份 config）
+python -m geval run --config config.json --tasks ceval --limit 200
 
 # ⑥ 比对偏移量，稳定后（通常 1~3 个点）阶段 1.5 / 阶段 4 全部用 geval 看相对变化
 ```
@@ -204,17 +206,22 @@ python -m geval run --config config.json --tasks ceval-likelihood --limit 200
 geval 并没有白写：它的抽取层、统计层、报告层可以直接复用到阶段 4，
 而那部分**开源框架结构上就帮不上忙**。被替换掉的只是「通用基准的绝对值」这一块。
 
-### 通用能力评测的 5 个对象
+### 通用能力评测的 5 对象模板（可选）
+
+> **口径说明**：当前仓库实际运行配置是 `config.json`（单模型 `llm-chat-core`、6 个任务）。
+> 下面的 5 对象对比属于 `config.example.json` 的可选模板，使用时先另存为 `config.5objects.json`。
 
 阶段 1 与阶段 1.5 合起来，构成一次完整的 **5 对象通用能力对比**
 （盘古7B 微调前/后、Qwen8B 微调前/后、Qwen3-32B）。分两个时点跑，但**必须用同一套配置、同一批样本**：
 
 ```bash
+cp config.example.json config.5objects.json    # 填好 5 个通道的 base_url / model
+
 # 阶段 1（微调前，3 个）
-python -m geval run --config config.json --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
+python -m geval run --config config.5objects.json --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
 
 # 阶段 1.5（微调后，补齐 2 个 post，报告自动出退化对比）
-python -m geval run --config config.json --resume
+python -m geval run --config config.5objects.json --resume
 ```
 
 两点在开源框架上要特别注意：
@@ -302,7 +309,7 @@ class IntentEvalTask(BaseTask):
 
 ### 7.5 阶段 4 的评测对象与对比口径
 
-你要比的是 5 个对象，但**核心问题只有一个**：
+5 对象模板下你要比的是 5 个对象，但**核心问题只有一个**：
 
 > 微调后的 7B/8B，在专业任务上能否追平 32B？代价是多少通用能力？
 
@@ -324,5 +331,5 @@ class IntentEvalTask(BaseTask):
 
 - **评测方法**：主流（同批基准、同套指标、比多数框架更严格的统计检验）✅
 - **评测框架**：自建，无第三方验证，与榜单绝对值不可对齐，这是已知且已量化的代价 ⚠️
-- **建议动作**：阶段 1 用 EvalScope 在联网机器上跑一份「锚点数字」，geval 负责内网的日常消融与前后对比
+- **建议动作**：阶段 1 用 lm-eval（离线部署，见 `OFFLINE_DEPLOY.md`）出一份「锚点数字」，geval 负责内网的日常消融与前后对比
 - **专业能力测评**：开源框架无解，必须自建；geval 的任务注册表就是为这一步留的接口

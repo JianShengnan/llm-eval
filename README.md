@@ -2,6 +2,12 @@
 
 对应你项目里的 **阶段 1：对盘古7B / Qwen8B / Qwen3-32B 做通用能力评测**。
 
+> **接手/交接请先读 [`HANDOVER.md`](HANDOVER.md)**：现状快照、已有特性清单、
+> 该读哪些文档、需要哪些背景知识、还有哪些没做，都汇总在那份文件里。
+>
+> **只跑专业能力评测（阶段 4）？直接看 [`docs/PROFESSIONAL_RUNBOOK.md`](docs/PROFESSIONAL_RUNBOOK.md)**：
+> 数据准备 → 探活 → 小样接线 → 全量 → 出报告，逐条命令与故障排查都在里面。
+
 目标不是"跑几个榜"，而是回答一个技术选型问题：
 
 > 用「小模型 + 微调」替代 Qwen3-32B，在**通用能力可接受的退化范围内**，能换来多少准确率与时延收益？
@@ -18,6 +24,10 @@
 > [`docs/OFFLINE_DEPLOY.md`](docs/OFFLINE_DEPLOY.md)，`lm-eval` 基础依赖里不含 torch，完全可行），
 > geval 负责 prompt 协议消融、微调前后配对检验、以及后续的专业能力测评。
 > 各管一段的理由见方法论文档 §6。
+>
+> **当前仓库口径**：实际运行配置是 [`config.json`](config.json)（单模型 `llm-chat-core`，6 个任务）。
+> [`config.example.json`](config.example.json) 保留为 **5 对象模板**（盘古7B / Qwen8B 的 pre、post + Qwen3-32B），
+> 只在五个通道都就绪时使用。下文命令未特别标注的，均以当前 `config.json` 为准。
 
 ---
 
@@ -40,31 +50,36 @@ python -m geval preview --task json_schema     # 与意图识别最贴近的那�
 # 干跑：mock 模型 + 合成数据，验证配置与报告
 python -m geval run --config config.smoke.json --smoke
 
-# 真实评测（改好 config.example.json 里的模型地址后）
-cp config.example.json config.json
+# 真实评测（确认 config.json 里的 base_url / model 指向实际服务）
+python -m geval doctor --config config.json            # 就绪检查：配置、端点、数据、目录
 python -m geval probe  --config config.json            # 端点探活
 python -m geval count  --config config.json            # 跑之前先看清样本量与请求量
-# 阶段 1：只跑微调前已有的 3 个模型
-python -m geval run    --config config.json --smoke --limit 8 \
-       --models pangu7b-pre,qwen8b-pre,qwen3-32b       # 先验证接线
-python -m geval run    --config config.json --limit 40 \
-       --models pangu7b-pre,qwen8b-pre,qwen3-32b       # 先看排序
-python -m geval run    --config config.json \
-       --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume   # 阶段 1 正式跑
 
-# 阶段 1.5：微调完成后跑全量 5 个对象，报告自动产出 pre→post 退化对比
-python -m geval run    --config config.json --resume
-python -m geval report --run runs/geval-general-5objects
+python -m geval run    --config config.json --smoke --limit 8   # 先验证接线
+python -m geval run    --config config.json --limit 40          # 先看排序
+python -m geval run    --config config.json --resume            # 正式跑
+python -m geval report --run runs/geval-llm-chat-core
 
-# 报告（也可在评价微调后模型时单独重出）
-python -m geval report --run runs/geval-general-5objects
+# 被网关限流/超时打崩过：先剔除失败样本补跑，再出报告（别把 error 行当已完成）
+python -m geval run    --config config.json --resume --retry-failed
+
+# 只重出报告、临时改综合分权重（不重跑模型）
+python -m geval report --run runs/geval-llm-chat-core \
+       --weights chinese=0.35,reasoning=0.3,instruction=0.3,math=0.05,json_schema=0
 ```
 
-或者直接跑完整脚本：
+**可选：5 对象模板**（改好 `config.example.json` 里 5 个通道的地址后，另存一份配置，避免覆盖当前 `config.json`）：
 
 ```bash
-bash scripts/run_stage1.sh
+cp config.example.json config.5objects.json
+# 阶段 1：微调前已有的 3 个模型
+python -m geval run --config config.5objects.json --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
+# 阶段 1.5：微调完成后补齐两个 post，报告自动产出 pre→post 退化对比
+python -m geval run --config config.5objects.json --resume
+python -m geval report --run runs/geval-general-5objects
 ```
+
+脚本 `scripts/run_stage1.sh` 同样面向这份 5 对象模板，当前单模型配置下不要直接执行。
 
 数据集多、总量上万条时（CMMLU / BBH 这类），默认串行会非常慢。
 **批量跑与少测数据集的完整做法见 [`docs/BATCH_RUNBOOK.md`](docs/BATCH_RUNBOOK.md)**，最短上手：
@@ -98,10 +113,12 @@ python scripts/verify_deps.py     # 输出「第三方依赖：无」
 | :--- | :--- | :--- |
 | 中文语言理解 | 中文 query 的语义边界判断 | `ceval` `cmmlu` |
 | 通用知识 | 领域词、实体、专有名词识别 | `mmlu` `mmlu_pro` `arc` |
-| 逻辑与数学推理 | 多意图、条件意图、否定意图 | `bbh` `gsm8k` `math` |
+| 逻辑与数学推理 | 多意图、条件意图、否定意图 | `bbh` `gsm8k` `math` `agieval` |
 | **指令遵循** | 格式约束守不守得住、会不会答非所问 | `ifeval` |
-| **结构化输出** | 直接产出 intent + slots JSON | `json_schema` |
+| **结构化输出** | 直接产出 intent + slots JSON | `json_schema` `intent_json` |
 | 长上下文与鲁棒性 | 多轮对话下的指代消解 | 见 §8 扩展建议 |
+
+内置任务共 12 个，完整清单与默认切分用 `python -m geval list-tasks` 查看。
 
 加粗的两项是**性价比最高的两项**：生产环境里意图识别的失败绝大多数不是"不懂知识"，
 而是**输出不可解析**和**边界判断漂移**。所以框架内建了 `json_schema` 和 `ifeval` 两个专项，
@@ -195,39 +212,49 @@ python scripts/verify_deps.py     # 输出「第三方依赖：无」
 `runs/<run_name>/report.html`（自包含单文件，内联 SVG，无外部引用，可直接发群）
 与 `report.md`。
 
-| 章节 | 看什么 |
+| 章节（按标题定位） | 看什么 |
 | :--- | :--- |
 | 1 准确率矩阵 | 全貌，带 ±CI。**不要只看小数点** |
-| 2 综合与时延 | 帕累托图：越靠左上越优 |
-| 3 配对显著性 | **决定能不能下结论**。CI 跨 0 或 p ≥ 0.05 的差距不算数 |
-| 4 解析质量 | 解析失败率、主要抽取策略。分低是抽取器的锅还是模型的锅 |
-| 5 结构化输出专项 | 意图识别的四层指标 |
-| 6 指令遵循专项 | 样本级 / 指令级通过率，以及未覆盖的指令类型 |
-| 8 分组明细 | 按 subject 定位短板 |
-| 9 错例抽样 | 人工快速复核 |
-| 10 复现信息 | 数据集指纹与运行期错误 |
+| 2 综合表现与时延 | 综合分、时延 p50/p95、准确率-时延帕累托图：越靠左上越优 |
+| 3 与基线的配对显著性检验 | **决定能不能下结论**。CI 跨 0 或 p ≥ 0.05 的差距不算数；单模型时输出跳过说明 |
+| 4 微调影响评估 | pre→post 差值与退化判定（仅当配置了 `report.pairs` 且配对两端都有结果） |
+| 5 解析质量与抽取策略分布 | 解析失败率、主要抽取策略。分低是抽取器的锅还是模型的锅 |
+| 6 续写似然打分 | `acc` / `acc_norm` 对照（仅当有 `loglikelihood` 结果） |
+| 7 结构化输出专项 | 意图识别的四层指标 |
+| 8 指令遵循专项 | 样本级 / 指令级通过率，以及未覆盖的指令类型 |
+| 9 分组明细 | 按 subject 定位短板 |
+| 10 错例抽样 | 人工快速复核 |
+| 11 复现信息 | 数据集指纹、运行期错误、client_stats |
+
+> **章节号是动态的**：3/4/6/7/8 属于可选章节，缺失时后续编号会前移（例如单模型运行时
+> 没有「微调影响评估」）。引用报告内容请按标题定位，不要写死「第 4 节」。
 
 ---
 
 ## 5. 配置说明
 
-详见 `config.example.json`。要点：
+当前实际配置是 `config.json`；`config.example.json` 是 5 对象模板。要点：
 
 | 字段 | 说明 |
 | :--- | :--- |
 | `proxy` | **默认 `bypass`**。服务器上常配 `HTTP_PROXY` 指向外网代理，urllib 会默认读取，导致内网模型请求被发给外网代理，表现为**超时或 502**。`bypass` 显式清空代理；`env` 跟随环境变量；也可填 `http://ip:port` |
 | `concurrency` | 并发请求数。vLLM/SGLang 部署下建议 8~32，先用 `probe` 确认单请求时延再定 |
+| `rate_limit_qps` | 单进程自我限流（网关/现网通道建议 1~2）。多进程叠加并发会超出网关配额，表现为大面积 429/超时 |
 | `extra_body` | 原样透传的额外请求体。Qwen3 系列关闭思考模式：`{"chat_template_kwargs": {"enable_thinking": false}}` |
 | `supports_logprobs` | 服务端是否支持 `logprobs`。不确定时设为 `false`，避免无效请求 |
 | `cache_dir` | 磁盘缓存，仅缓存 `temperature == 0` 的确定性请求，避免缓存污染 |
 | `tasks[].limit` | 分层抽样上限。`0` = 全量 |
 | `tasks[].tag` | 同一任务起别名，用于并行对比不同 prompt 协议 |
 | `tasks[].max_tokens` | 逐任务的生成上限（覆盖模型级 `params.max_tokens`）。选择题配 `direct` 协议时设 16 能显著提速 |
+| `dimension_weights` | 综合分维度权重，如 `{"chinese":0.35,"reasoning":0.3,"instruction":0.3,"math":0.05}`；需配合任务条目的 `dimension` 才生效，同维度内多任务平分 |
+| `tasks[].dimension` | 任务所属维度；写 `null` 表示只做专项诊断，不计入综合分 |
+| `tasks[].weight` | 显式绝对权重，优先级高于维度平分 |
+| `report.baseline` | 配对检验的基线模型 id；5 对象模板里一般填 `qwen3-32b` |
+| `report.pairs` | 指定配对，用于微调前 / 后对比 |
 
 命令行：`--parallel-tasks N` 让同一模型内的多个数据集并行（实际在途 ≤ N × concurrency），
 `merge-runs` 把分批运行的多个 run 目录合并成一张总表，详见 `docs/BATCH_RUNBOOK.md`。
-| `report.baseline` | 配对检验的基线模型 id，一般填现网的 Qwen3-32B |
-| `report.pairs` | 指定配对，用于微调前 / 后对比 |
+`--weights key=权重,...` 临时覆盖综合分口径（key 可为维度名 / task_key / 数据集名），只改报告、不需要重跑。
 
 ---
 
@@ -241,9 +268,13 @@ python scripts/verify_deps.py     # 输出「第三方依赖：无」
 
 ---
 
-## 7. 通用能力评测的 5 个对象：阶段 1 + 阶段 1.5
+## 7. 可选模板：5 对象通用能力对比（阶段 1 + 阶段 1.5）
 
-**通用能力评测的被测对象是 5 个**：盘古7B（微调前/后）、Qwen8B（微调前/后）、Qwen3-32B。
+> **这是 `config.example.json` 的可选模板，不是当前默认口径。** 当前实际运行的是
+> `config.json`（单模型 `llm-chat-core`）。只有当盘古7B / Qwen8B 的 pre、post 与 Qwen3-32B
+> 五个通道都就绪时，才启用本节流程；建议另存为 `config.5objects.json`。
+
+**模板的被测对象是 5 个**：盘古7B（微调前/后）、Qwen8B（微调前/后）、Qwen3-32B。
 分两个时点执行，最后合并出「微调影响评估」：
 
 | 时点 | 执行 | 说明 |
@@ -251,15 +282,14 @@ python scripts/verify_deps.py     # 输出「第三方依赖：无」
 | 阶段 1（微调前） | `--models pangu7b-pre,qwen8b-pre,qwen3-32b` | 建立基线，同时回答「小模型该用哪种 prompt 协议」 |
 | 阶段 1.5（微调后） | 直接跑全量（配置里 5 个模型都已定义） | 补上两个 post 模型，报告自动产出 pre→post 对比 |
 
-配置见 `config.example.json`（5 个模型已一次性定义好）。阶段 1 时后两个模型还不存在，
-用 `--models` 过滤即可；不指定就是 5 个全跑。
+模板阶段 1 时后两个模型还不存在，用 `--models` 过滤即可；不指定就是 5 个全跑。
 
 ### 为什么这一步必须做
 
 小模型 SFT 之后最常见的副作用是**灾难性遗忘**。如果通用能力只测微调前一次，
 你无法判断「意图识别涨的 3 个点」是不是以通用能力崩了 5 个点为代价换来的。
 
-报告第 4 节「微调影响评估」会逐任务给出 pre→post 差值与判定：
+报告里的「微调影响评估」一节会逐任务给出 pre→post 差值与判定：
 
 ```
 | 任务        | 微调前 | 微调后 | 差值      | 差值 95% CI      | McNemar p | 判定     |
@@ -292,8 +322,8 @@ python scripts/verify_deps.py     # 输出「第三方依赖：无」
 > `json_valid_rate` 不下降 → 可替代。
 
 ```bash
-# 阶段 1.5
-python -m geval run   --config config.json --resume
+# 阶段 1.5（模板配置）
+python -m geval run   --config config.5objects.json --resume
 python -m geval report --run runs/geval-general-5objects
 ```
 
@@ -319,32 +349,41 @@ python -m geval report --run runs/geval-general-5objects
 
 ```
 llm-general-eval/
-  config.example.json      真实模型配置模板
-  config.smoke.json        干跑配置（mock 模型，不连真实服务）
+  config.json              当前实际运行配置（单模型 llm-chat-core）
+  config.example.json      5 对象模板（盘古7B/Qwen8B pre-post + Qwen3-32B，可选）
+  config.smoke.json        干跑配置（5 个 mock 模型，不连真实服务）
   requirements.txt         无第三方依赖（说明性文件）
+  CODE_MANIFEST.txt        源码 sha256 清单（随增量包分发）
   geval/
-    __main__.py            CLI：doctor / run / report / selftest / count / preview / probe / merge-runs
+    __main__.py            CLI：doctor / run / report / merge-runs / selftest / list-tasks / count / preview / probe
     client.py              OpenAI 兼容客户端（并发安全、重试、磁盘缓存、logprobs）
+    reqbody_gateway.py     reqBody 包装网关（鉴权放 body 内）
     http.py                urllib 传输层（代理策略、退避重试）
     datasets.py            多格式归一化、去重、分层抽样、合成数据
     prompts.py             三种 prompt 协议 + 各任务模板
     answers.py             答案抽取（选项 / 数值 / JSON）+ 思维链剥离
     metrics.py             准确率、Wilson / bootstrap 区间、McNemar、时延分位
-    tasks.py               任务注册表（MCQ / 数值 / 短答案 / JSON / IFEval）
+    tasks.py               任务注册表（12 个内置基准）
     ifeval.py              24 类规则化指令校验器
     runner.py              编排：并发执行、断点续跑、落盘、指纹
     merge.py               合并多个分批运行目录，重建 summary.json
-    report.py              Markdown + 自包含 HTML（内联 SVG 图表）
+    report.py              Markdown + 自包含 HTML（内联 SVG 图表）+ 综合分权重
     mock.py                确定性 mock 模型（离线自检用）
+    util.py                文件、JSONL、进度与文本工具
   datasets/
     README.md              数据格式与准备方式
+    ceval/ cmmlu/ gsm8k/   ← 公开基准 JSONL（test/dev），已在本地备齐
+    bbh/ ifeval/
     json_schema/           意图 + 槽位示例数据集（含 schema.json）
   docs/
+    ARCHITECTURE_SUMMARY.md 架构概览与快速启动
     INTRANET_RUNBOOK.md    ★ 行内运行手册（部署、执行、故障排查，实操优先）
     BATCH_RUNBOOK.md       ★ 批量评测手册：任务并行 / 分批跑 / merge-runs 合并
     COVERAGE.md            五项需求的覆盖度对照（支持什么、不支持什么、缺口在哪）
+    PROFESSIONAL_RUNBOOK.md ★ 专业能力评测命令手册（数据准备 / 跑评测 / 看报告 / 成本口径 / 排障）
     EVAL_METHODOLOGY.md    与开源框架的关系、可比性边界、专业能力测评设计
     OFFLINE_DEPLOY.md      把 lm-eval / EvalScope 离线装进内网 ARM64 的实操指南
+  HANDOVER.md              ★ 交接文档：现状、特性清单、阅读顺序、背景知识与待办
   scripts/
     prepare_datasets.py    公开基准 -> JSONL（联网机器执行）
     download_wheels.sh     为 aarch64 / py3.11 下载开源框架的离线 wheel（联网机器）
@@ -352,13 +391,14 @@ llm-general-eval/
     pack_bundle.py         打成单个交付包 + 生成 sha256 清单（--code-only 出增量包）
     verify_install.py      ★ 核对内网代码与最新版本是否一致（内网机器，见手册 §2.4）
     verify_deps.py         依赖核查（确认 geval 运行时零第三方依赖）
-    run_stage1.sh          阶段 1 推荐执行顺序
-  dist/                    交付包与校验值（拷进内网用，不入库）
-    llm-general-eval-*.tar.gz   全量包（含预下载 wheel，约 133 MB）
-    geval-src-*.tar.gz          源码增量包（约 150 KB，更新内网用，排除 datasets/ 与 wheels/）
-    CODE_MANIFEST.txt           源码 sha256 清单，随增量包分发
-  wheels/                  预下载的离线 wheel（bootstrap + lm-eval，不入库）
+    diagnose.py            ★ 逐样本归因：区分请求失败 / 输出为空 / 思维链污染 / 抽取失败
+    rescore.py             离线重判：不重新请求模型，只按新规则重算已落盘结果
+    run_stage1.sh          5 对象模板的推荐执行顺序（默认读 config.5objects.json）
+  dist/                    ★ 仅保留 CODE_MANIFEST.txt（sha256 清单）
+                           全量包 / 增量包 tar.gz 由 scripts/pack_bundle.py 现场生成，
+                           .gitignore 已排除，不入库
   runs/<run_name>/         运行产物：manifest / 明细 JSONL / summary / report
+                           （已在本地的是 smoke / smoke_verify*，真实评测尚未执行）
 ```
 
 ---
@@ -375,6 +415,20 @@ llm-general-eval/
 **Q：`json_schema` 的 `extra_prose_rate` 很高？**
 确认 prompt 里是否有"只输出一个 JSON 对象，不要输出解释、不要使用 markdown 代码块"，
 以及服务端是否支持严格的 json 输出模式。`strict_json: false` 可以放宽为只判语义正确。
+
+**Q：README 里既有单模型命令，又有 5 对象命令，该看哪套？**
+默认看单模型那套：当前实际配置是 `config.json`（`llm-chat-core`）。5 对象（盘古7B / Qwen8B 的
+pre、post + Qwen3-32B）只存在于 `config.example.json` 模板里，五个通道都就绪时才启用。
+
+**Q：综合分权重怎么改？**
+两种方式：在配置里写 `dimension_weights` + 任务条目的 `dimension`（长期口径），
+或 `python -m geval report --run <dir> --weights chinese=0.35,reasoning=0.3,json_schema=0`
+临时覆盖。两者都只改报告，不需要重跑模型。
+
+**Q：被网关限流或超时打崩了一批，怎么办？**
+失败样本会以 `error` 行留在明细里，`--resume` 默认会把它们当成已完成。先执行
+`python -m geval run --config config.json --resume --retry-failed` 剔除并补跑失败样本，
+再出报告；逐样本归因可用 `python scripts/diagnose.py runs/<run_name>`。
 
 **Q：跑全量太贵/太慢？**
 先用 `--limit 40` 分层抽样看排序，排序稳定后再全量。抽样运行的报告会自动标注不可与榜单直接对齐。

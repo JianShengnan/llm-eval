@@ -256,6 +256,16 @@ class MockClient(ModelClient):
             # 因此该类型不加噪声；未命中时给出一个看似合理但不满足约束的回答。
             return target if hit else _NONCOMPLIANT_RESPONSE
 
+        if kind == "intent":
+            # 专业意图任务要求「只输出一个标签」。命中时纯标签；未命中时换成
+            # 候选树里另一个标签（模拟意图串位），并按 noise 夹带解释性文字，
+            # 用来离线验证 in_tree / extra_prose / 混淆矩阵三条判定链路。
+            pool = [str(x) for x in (entry.get("labels") or []) if str(x) != gold]
+            body = target if hit else (pool[rng.randrange(len(pool))] if pool else "未知意图")
+            if rng.random() < self.noise:
+                body = "根据对话判断，意图是：%s。" % body
+            return body
+
         if kind == "json":
             if hit:
                 body = target

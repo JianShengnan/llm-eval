@@ -748,3 +748,15 @@ def get_task(name: str, cfg: Optional[Dict[str, Any]] = None) -> BaseTask:
 
 def task_kinds() -> Dict[str, str]:
     return {name: getattr(cls, "kind", "?") for name, cls in sorted(TASK_REGISTRY.items())}
+
+
+# --------------------------------------------------------------------------- #
+# 专业能力评测扩展（阶段 4）：在模块末尾导入，避免 professional.py 反向依赖
+# BaseTask 时形成循环导入。扩展文件缺失时原有 12 个任务照常可用。
+try:
+    from . import professional as _professional
+
+    _professional.register(TASK_REGISTRY)
+    DEFAULT_FEWSHOT.setdefault("intent_routing", 0)
+except ImportError:  # pragma: no cover
+    pass

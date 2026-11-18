@@ -1,0 +1,3788 @@
+{
+  "metrics": {
+    "n_samples": 432,
+    "n_sessions": 140,
+    "n_nodes": 498,
+    "n_labels": 495,
+    "n_hit_labels": 53,
+    "n_hit_paths": 53,
+    "coverage_label_pct": 10.71,
+    "coverage_path_pct": 10.64,
+    "by_source": {
+      "FAQ节点": {
+        "nodes": 326,
+        "hit": 16,
+        "coverage_pct": 4.91,
+        "sample_hits": 40
+      },
+      "业务菜单节点": {
+        "nodes": 172,
+        "hit": 37,
+        "coverage_pct": 21.51,
+        "sample_hits": 392
+      }
+    },
+    "by_level": {
+      "1": {
+        "nodes": 399,
+        "hit": 40,
+        "coverage_pct": 10.03,
+        "sample_hits": 400
+      },
+      "2": {
+        "nodes": 50,
+        "hit": 8,
+        "coverage_pct": 16.0,
+        "sample_hits": 18
+      },
+      "3": {
+        "nodes": 49,
+        "hit": 5,
+        "coverage_pct": 10.2,
+        "sample_hits": 14
+      }
+    },
+    "sample_resolve_mode": {
+      "路径精确匹配": 408,
+      "名称唯一回退": 24
+    },
+    "sample_by_source": {
+      "业务菜单节点": 392,
+      "FAQ节点": 40
+    },
+    "sample_by_level": {
+      "1": 400,
+      "2": 18,
+      "3": 14
+    },
+    "sample_type": {
+      "业务/FAQ意图": 139,
+      "通用交互意图": 293
+    },
+    "top1_share_pct": 37.96,
+    "top5_share_pct": 60.19,
+    "top10_share_pct": 75.23,
+    "labels_needed_for_80pct_samples": 14,
+    "singleton_labels": 20,
+    "hhi": 0.1638,
+    "ambiguous_label_names": {
+      "电话银行密码": [
+        "密码/电话银行密码",
+        "电话银行服务/电话银行密码"
+      ],
+      "个人电话银行密码修改": [
+        "密码/电话银行密码/个人电话银行密码修改",
+        "电话银行服务/电话银行密码/个人电话银行密码修改"
+      ],
+      "电话银行密码重置": [
+        "密码/电话银行密码/电话银行密码重置",
+        "电话银行服务/电话银行密码/电话银行密码重置"
+      ]
+    },
+    "hit_ambiguous_label_names": {},
+    "hit_labels_subset_of_framework_labels": true,
+    "unresolved_samples": 0
+  },
+  "node_hits": [
+    {
+      "path": "applepay介绍",
+      "label": "applepay介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "atm机存款到账时间",
+      "label": "atm机存款到账时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "atm机错账处理流程",
+      "label": "atm机错账处理流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "atm机取款支持账户类型",
+      "label": "atm机取款支持账户类型",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "atm扫码取款",
+      "label": "atm扫码取款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "atm支持的现钞面值",
+      "label": "atm支持的现钞面值",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "etc介绍",
+      "label": "etc介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "etc注销",
+      "label": "etc注销",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "huaweipay介绍",
+      "label": "huaweipay介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "ⅰ类账户介绍",
+      "label": "ⅰ类账户介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "ⅲ类账户介绍",
+      "label": "ⅲ类账户介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "ⅱ、ⅲ类账户是否可以绑定微信支付宝",
+      "label": "ⅱ、ⅲ类账户是否可以绑定微信支付宝",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "ⅱ类账户介绍",
+      "label": "ⅱ类账户介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "ⅰ、ⅱ、ⅲ类账户升降级",
+      "label": "ⅰ、ⅱ、ⅲ类账户升降级",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "保管箱业务",
+      "label": "保管箱业务",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "北向通介绍",
+      "label": "北向通介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "变更个人贷款还款账户",
+      "label": "变更个人贷款还款账户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "冲正介绍",
+      "label": "冲正介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "存款保险介绍",
+      "label": "存款保险介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单办理时间",
+      "label": "大额存单办理时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单存款期限",
+      "label": "大额存单存款期限",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单计息规定",
+      "label": "大额存单计息规定",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单解约办理流程",
+      "label": "大额存单解约办理流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单介绍",
+      "label": "大额存单介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单起点金额",
+      "label": "大额存单起点金额",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单支持账户类型",
+      "label": "大额存单支持账户类型",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单支取",
+      "label": "大额存单支取",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "大额存单转让功能入口",
+      "label": "大额存单转让功能入口",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "代销实物贵金属介绍",
+      "label": "代销实物贵金属介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贷款结清证明",
+      "label": "贷款结清证明",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贷款市场报价利率每月调整是否影响贷款利率",
+      "label": "贷款市场报价利率每月调整是否影响贷款利率",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贷款提前还款违约金",
+      "label": "贷款提前还款违约金",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贷款逾期还款",
+      "label": "贷款逾期还款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贷款逾期是否会影响个人征信报告",
+      "label": "贷款逾期是否会影响个人征信报告",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "登录问题咨询",
+      "label": "登录问题咨询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "第三方存管服务时间",
+      "label": "第三方存管服务时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "第三方存管借记卡变更业务",
+      "label": "第三方存管借记卡变更业务",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "第三方支付平台电话",
+      "label": "第三方支付平台电话",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "第三方支付平台提现未到账",
+      "label": "第三方支付平台提现未到账",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "电汇介绍",
+      "label": "电汇介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "电子支付开通",
+      "label": "电子支付开通",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "定期存款查询",
+      "label": "定期存款查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "定期存款支取方法",
+      "label": "定期存款支取方法",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "对公电话银行业务",
+      "label": "对公电话银行业务",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "对公开户许可证介绍",
+      "label": "对公开户许可证介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "对公人民币结算账户销户",
+      "label": "对公人民币结算账户销户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "二维码支付开通",
+      "label": "二维码支付开通",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人存款账户实名制介绍",
+      "label": "个人存款账户实名制介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人存款证明介绍",
+      "label": "个人存款证明介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人贷款还款",
+      "label": "个人贷款还款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人贷款提前还款申请流程",
+      "label": "个人贷款提前还款申请流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人贷款账号查询",
+      "label": "个人贷款账号查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人第三方存管开户时间",
+      "label": "个人第三方存管开户时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人电子银行实时转账未到账",
+      "label": "个人电子银行实时转账未到账",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人电子银行转账回单",
+      "label": "个人电子银行转账回单",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人电子银行转账汇款附言",
+      "label": "个人电子银行转账汇款附言",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人二手住房贷款办理网点",
+      "label": "个人二手住房贷款办理网点",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人二手住房贷款贷款期限",
+      "label": "个人二手住房贷款贷款期限",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人二手住房贷款额度",
+      "label": "个人二手住房贷款额度",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人二手住房贷款介绍",
+      "label": "个人二手住房贷款介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人二手住房贷款提前还款",
+      "label": "个人二手住房贷款提前还款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人接收境外汇款收款信息填写要求",
+      "label": "个人接收境外汇款收款信息填写要求",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人结汇购汇办理方法",
+      "label": "个人结汇购汇办理方法",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 1
+    },
+    {
+      "path": "个人客户存款账户信息变更",
+      "label": "个人客户存款账户信息变更",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户存款账户信息查询",
+      "label": "个人客户存款账户信息查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户第三方存管介绍",
+      "label": "个人客户第三方存管介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户第三方存管开户办理流程",
+      "label": "个人客户第三方存管开户办理流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户第三方存管销户",
+      "label": "个人客户第三方存管销户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户短信通知解约",
+      "label": "个人客户短信通知解约",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户短信通知手机号码修改",
+      "label": "个人客户短信通知手机号码修改",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户活期存款计息规定",
+      "label": "个人客户活期存款计息规定",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户跨境汇入汇款解付收费标准",
+      "label": "个人客户跨境汇入汇款解付收费标准",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户跨行人民币汇出未到账",
+      "label": "个人客户跨行人民币汇出未到账",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户外币跨境汇出汇款到账时间",
+      "label": "个人客户外币跨境汇出汇款到账时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户预约外币现钞",
+      "label": "个人客户预约外币现钞",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人客户中银e令更换",
+      "label": "个人客户中银e令更换",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人跨境汇出汇款收费标准",
+      "label": "个人跨境汇出汇款收费标准",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人跨境汇出填写信息",
+      "label": "个人跨境汇出填写信息",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人联名存款账户开户",
+      "label": "个人联名存款账户开户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人钱包支付密码修改与重置",
+      "label": "个人钱包支付密码修改与重置",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人商业用房贷款额度",
+      "label": "个人商业用房贷款额度",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人商业用房贷款介绍",
+      "label": "个人商业用房贷款介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人商业用房贷款提前还款",
+      "label": "个人商业用房贷款提前还款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人实盘外汇买卖办理",
+      "label": "个人实盘外汇买卖办理",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人实盘外汇买卖介绍",
+      "label": "个人实盘外汇买卖介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人数币存银行操作步骤",
+      "label": "个人数币存银行操作步骤",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人数币钱包绑定及解绑银行卡",
+      "label": "个人数币钱包绑定及解绑银行卡",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人数字钱包充值",
+      "label": "个人数字钱包充值",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人投资理财开通及关闭",
+      "label": "个人投资理财开通及关闭",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人网银安全工具常用限额",
+      "label": "个人网银安全工具常用限额",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人网银登录",
+      "label": "个人网银登录",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人网银登录密码重置",
+      "label": "个人网银登录密码重置",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人网银风险测评",
+      "label": "个人网银风险测评",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人网银开通",
+      "label": "个人网银开通",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人网银用户名找回",
+      "label": "个人网银用户名找回",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人无法接收手机交易码",
+      "label": "个人无法接收手机交易码",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人消费贷款贴息范围",
+      "label": "个人消费贷款贴息范围",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人消费类汽车贷款介绍",
+      "label": "个人消费类汽车贷款介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人信息查询及修改",
+      "label": "个人信息查询及修改",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人信用报告查询",
+      "label": "个人信用报告查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人养老金缴费凭证",
+      "label": "个人养老金缴费凭证",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人养老金领取",
+      "label": "个人养老金领取",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人养老金资金账户变更",
+      "label": "个人养老金资金账户变更",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人养老金资金账户介绍",
+      "label": "个人养老金资金账户介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人一手住房贷款贷款期限",
+      "label": "个人一手住房贷款贷款期限",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人一手住房贷款额度",
+      "label": "个人一手住房贷款额度",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人一手住房贷款还款方式",
+      "label": "个人一手住房贷款还款方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人一手住房贷款提前还款",
+      "label": "个人一手住房贷款提前还款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人证件更新",
+      "label": "个人证件更新",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 5
+    },
+    {
+      "path": "个人纸质存款证明能否提前解冻",
+      "label": "个人纸质存款证明能否提前解冻",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人中银e盾挂失与补办",
+      "label": "个人中银e盾挂失与补办",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人中银e盾密码修改",
+      "label": "个人中银e盾密码修改",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人中银e盾申请",
+      "label": "个人中银e盾申请",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人中银e盾证书更新",
+      "label": "个人中银e盾证书更新",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人中银e令挂失",
+      "label": "个人中银e令挂失",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人中银e令注销",
+      "label": "个人中银e令注销",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人住房贷款还款方式变更",
+      "label": "个人住房贷款还款方式变更",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人住房公积金贷款利率调整",
+      "label": "个人住房公积金贷款利率调整",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "公司客户短信通知解约",
+      "label": "公司客户短信通知解约",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "公司客户短信通知开通",
+      "label": "公司客户短信通知开通",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失撤销",
+      "label": "挂失撤销",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "关注中国银行微银行",
+      "label": "关注中国银行微银行",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "官方网站lpr报价查询",
+      "label": "官方网站lpr报价查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "柜台人民币取款流程",
+      "label": "柜台人民币取款流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 1
+    },
+    {
+      "path": "柜台现金存款业务",
+      "label": "柜台现金存款业务",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贵金属积存办理时间",
+      "label": "贵金属积存办理时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贵金属积存购买与赎回",
+      "label": "贵金属积存购买与赎回",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贵金属积存适用对象",
+      "label": "贵金属积存适用对象",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贵金属积存账户开户",
+      "label": "贵金属积存账户开户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贵金属积存账户销户",
+      "label": "贵金属积存账户销户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "话费充值操作步骤",
+      "label": "话费充值操作步骤",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "话费充值记录查询",
+      "label": "话费充值记录查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "话费充值失败退款到账时间",
+      "label": "话费充值失败退款到账时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "活期存款介绍",
+      "label": "活期存款介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "货币对查询渠道",
+      "label": "货币对查询渠道",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "基金风险评估的客户风险类型",
+      "label": "基金风险评估的客户风险类型",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "基金交易时间",
+      "label": "基金交易时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "基金介绍",
+      "label": "基金介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "基金账户介绍",
+      "label": "基金账户介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "教育储蓄介绍",
+      "label": "教育储蓄介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "解除etc黑名单",
+      "label": "解除etc黑名单",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡atm机取款单笔限额",
+      "label": "借记卡atm机取款单笔限额",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡电子现金账户圈提",
+      "label": "借记卡电子现金账户圈提",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡核心预留手机号码查询",
+      "label": "借记卡核心预留手机号码查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 1
+    },
+    {
+      "path": "借记卡核心预留手机号码修改",
+      "label": "借记卡核心预留手机号码修改",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 6
+    },
+    {
+      "path": "借记卡激活办理流程",
+      "label": "借记卡激活办理流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡交易明细打印",
+      "label": "借记卡交易明细打印",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡卡号或账号查询",
+      "label": "借记卡卡号或账号查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 4
+    },
+    {
+      "path": "借记卡卡状态查询",
+      "label": "借记卡卡状态查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 2
+    },
+    {
+      "path": "借记卡开户办理规定",
+      "label": "借记卡开户办理规定",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡年费收费标准",
+      "label": "借记卡年费收费标准",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡启用日期查询",
+      "label": "借记卡启用日期查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡取款密码解锁",
+      "label": "借记卡取款密码解锁",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡销户",
+      "label": "借记卡销户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "借记卡业务咨询",
+      "label": "借记卡业务咨询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 5
+    },
+    {
+      "path": "借记卡有效期",
+      "label": "借记卡有效期",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "金融社保卡挂失办理流程",
+      "label": "金融社保卡挂失办理流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "金融社保卡金融账户主要功能",
+      "label": "金融社保卡金融账户主要功能",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "金融社保卡客服热线",
+      "label": "金融社保卡客服热线",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "金融社保卡社保账户主要功能",
+      "label": "金融社保卡社保账户主要功能",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "金融社保卡销户",
+      "label": "金融社保卡销户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "旧版企业网银如何升级为企业网银",
+      "label": "旧版企业网银如何升级为企业网银",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "就医挂号",
+      "label": "就医挂号",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "卡片类型查询",
+      "label": "卡片类型查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "开通或关闭单手机交易码",
+      "label": "开通或关闭单手机交易码",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "客户等级查询",
+      "label": "客户等级查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "跨境go注销",
+      "label": "跨境go注销",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "跨境汇出汇款办理方法",
+      "label": "跨境汇出汇款办理方法",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 1
+    },
+    {
+      "path": "跨境汇款记录查询",
+      "label": "跨境汇款记录查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "跨境汇入汇款介绍",
+      "label": "跨境汇入汇款介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "跨境理财通介绍",
+      "label": "跨境理财通介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "跨境支付通内港通",
+      "label": "跨境支付通内港通",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "跨境转账信息有误如何处理",
+      "label": "跨境转账信息有误如何处理",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "快捷支付解约",
+      "label": "快捷支付解约",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 3
+    },
+    {
+      "path": "快捷支付介绍",
+      "label": "快捷支付介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "快捷支付限额",
+      "label": "快捷支付限额",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "来聚财业务",
+      "label": "来聚财业务",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "理财产品是否支持提前终止",
+      "label": "理财产品是否支持提前终止",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "理财到期或赎回到账时间",
+      "label": "理财到期或赎回到账时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "理财经理查询",
+      "label": "理财经理查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "南向通介绍",
+      "label": "南向通介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "年年卡客服热线",
+      "label": "年年卡客服热线",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "批量开卡借记卡初始密码",
+      "label": "批量开卡借记卡初始密码",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "票汇介绍",
+      "label": "票汇介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业电子银行对账不符解决方式",
+      "label": "企业电子银行对账不符解决方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银登录",
+      "label": "企业网银登录",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银电子回单查询时限",
+      "label": "企业网银电子回单查询时限",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银电子回单打印",
+      "label": "企业网银电子回单打印",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银电子回单介绍",
+      "label": "企业网银电子回单介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银对私汇款支持账户类型",
+      "label": "企业网银对私汇款支持账户类型",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银对账操作流程",
+      "label": "企业网银对账操作流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银工资发放委托操作步骤",
+      "label": "企业网银工资发放委托操作步骤",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银批量转账汇款/工资发放时能否进行预约",
+      "label": "工资发放时能否进行预约",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银批量转账汇款模板下载",
+      "label": "企业网银批量转账汇款模板下载",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银收款人信息查询",
+      "label": "企业网银收款人信息查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银提示数字证书查询错误原因",
+      "label": "企业网银提示数字证书查询错误原因",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银外币结汇历史交易查询",
+      "label": "企业网银外币结汇历史交易查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银未及时对账的影响",
+      "label": "企业网银未及时对账的影响",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银与旧版企业网银有何区别",
+      "label": "企业网银与旧版企业网银有何区别",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银怎么登录不了",
+      "label": "企业网银怎么登录不了",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银转账汇款回单打印操作流程",
+      "label": "企业网银转账汇款回单打印操作流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银转账汇款交易系统提示:收款账户户名核对不符的报错解决方式",
+      "label": "企业网银转账汇款交易系统提示:收款账户户名核对不符的报错解决方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业网银转账汇款时收款人类别无法选择的处理方式",
+      "label": "企业网银转账汇款时收款人类别无法选择的处理方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "人民币境内汇出汇款办理时间",
+      "label": "人民币境内汇出汇款办理时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "商贷转公积金贷款申请流程",
+      "label": "商贷转公积金贷款申请流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "商业承兑汇票介绍",
+      "label": "商业承兑汇票介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "什么是贷款市场报价利率",
+      "label": "什么是贷款市场报价利率",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "实物贵金属购买",
+      "label": "实物贵金属购买",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "收款人管理",
+      "label": "收款人管理",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机交易码解锁",
+      "label": "手机交易码解锁",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行安全工具常用限额",
+      "label": "手机银行安全工具常用限额",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行登录",
+      "label": "手机银行登录",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行二维码收款",
+      "label": "手机银行二维码收款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行风险测评",
+      "label": "手机银行风险测评",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行关联银行卡",
+      "label": "手机银行关联银行卡",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行开立数币钱包步骤",
+      "label": "手机银行开立数币钱包步骤",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行客户端下载",
+      "label": "手机银行客户端下载",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行理财产品查询与购买",
+      "label": "手机银行理财产品查询与购买",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行理财赎回",
+      "label": "手机银行理财赎回",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行留学汇款功能",
+      "label": "手机银行留学汇款功能",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行人脸认证登录方式",
+      "label": "手机银行人脸认证登录方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行申购基金",
+      "label": "手机银行申购基金",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行生活缴费操作步骤",
+      "label": "手机银行生活缴费操作步骤",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行手机盾介绍",
+      "label": "手机银行手机盾介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行数字人民币钱包登录",
+      "label": "手机银行数字人民币钱包登录",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行新增定期存款",
+      "label": "手机银行新增定期存款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行一键绑卡",
+      "label": "手机银行一键绑卡",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行注册",
+      "label": "手机银行注册",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行转账方法",
+      "label": "手机银行转账方法",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 1
+    },
+    {
+      "path": "首次登录企业网银应如何操作",
+      "label": "首次登录企业网银应如何操作",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "数币钱包交易记录查询",
+      "label": "数币钱包交易记录查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "数字人民币钱包升级",
+      "label": "数字人民币钱包升级",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "数字人民币特点",
+      "label": "数字人民币特点",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "双向宝介绍",
+      "label": "双向宝介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "私人银行业务介绍",
+      "label": "私人银行业务介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "随心智贷还款",
+      "label": "随心智贷还款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "随心智贷介绍",
+      "label": "随心智贷介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "随心智贷申请",
+      "label": "随心智贷申请",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "岁悦长情版手机银行及普通版手机银行版本切换",
+      "label": "岁悦长情版手机银行及普通版手机银行版本切换",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "外币兑换咨询",
+      "label": "外币兑换咨询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 1
+    },
+    {
+      "path": "外币跨境汇出汇款限额",
+      "label": "外币跨境汇出汇款限额",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "外币携带证办理方法",
+      "label": "外币携带证办理方法",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "外汇储蓄账户开户办理条件",
+      "label": "外汇储蓄账户开户办理条件",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "网点信息查询及预约排队",
+      "label": "网点信息查询及预约排队",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 3
+    },
+    {
+      "path": "网银业务咨询",
+      "label": "网银业务咨询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 3
+    },
+    {
+      "path": "微银行绑定银行卡",
+      "label": "微银行绑定银行卡",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "微银行解绑银行卡",
+      "label": "微银行解绑银行卡",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "微银行微信通知服务开通方式",
+      "label": "微银行微信通知服务开通方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "微银行微信通知服务取消方式",
+      "label": "微银行微信通知服务取消方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "新增大额存单",
+      "label": "新增大额存单",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "养老金销户",
+      "label": "养老金销户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "一次性信用修复政策",
+      "label": "一次性信用修复政策",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "银企对账功能介绍",
+      "label": "银企对账功能介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "银证转账操作步骤",
+      "label": "银证转账操作步骤",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "逾期欠款账户强制转入授权问题",
+      "label": "逾期欠款账户强制转入授权问题",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "预约转账操作步骤",
+      "label": "预约转账操作步骤",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "长城冰雪借记卡开户办理流程",
+      "label": "长城冰雪借记卡开户办理流程",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "长期不动户介绍",
+      "label": "长期不动户介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "整存整取介绍",
+      "label": "整存整取介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "支付超给利活动问题",
+      "label": "支付超给利活动问题",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中国银行贵宾客户等级",
+      "label": "中国银行贵宾客户等级",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中国银行销售的理财产品类型",
+      "label": "中国银行销售的理财产品类型",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中国银行在线客服介绍",
+      "label": "中国银行在线客服介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中行打印个人征信报告显示信息",
+      "label": "中行打印个人征信报告显示信息",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷贷款期限",
+      "label": "中银e贷贷款期限",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷还款计划查询",
+      "label": "中银e贷还款计划查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷还款日",
+      "label": "中银e贷还款日",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷激活",
+      "label": "中银e贷激活",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷交易时间",
+      "label": "中银e贷交易时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷结清证明打印",
+      "label": "中银e贷结清证明打印",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷扣款时间",
+      "label": "中银e贷扣款时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷申请办理渠道",
+      "label": "中银e贷申请办理渠道",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷申请被拒绝的原因",
+      "label": "中银e贷申请被拒绝的原因",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷审批时间",
+      "label": "中银e贷审批时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷提款",
+      "label": "中银e贷提款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷提前还款",
+      "label": "中银e贷提前还款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷逾期金额查询",
+      "label": "中银e贷逾期金额查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银e贷资金使用",
+      "label": "中银e贷资金使用",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银单位结算卡存款",
+      "label": "中银单位结算卡存款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银单位结算卡取款",
+      "label": "中银单位结算卡取款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银快付关闭",
+      "label": "中银快付关闭",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银快付开通",
+      "label": "中银快付开通",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银快付限额查询",
+      "label": "中银快付限额查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "中银消费金融公司客服热线",
+      "label": "中银消费金融公司客服热线",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "住房公积金贷款办理手续",
+      "label": "住房公积金贷款办理手续",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "注销数字人民币钱包",
+      "label": "注销数字人民币钱包",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "转账汇款到账时间",
+      "label": "转账汇款到账时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 1
+    },
+    {
+      "path": "手机银行申请贷款的方式",
+      "label": "手机银行申请贷款的方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 2
+    },
+    {
+      "path": "个人贷款申请进度查询",
+      "label": "个人贷款申请进度查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行热门活动介绍",
+      "label": "手机银行热门活动介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人存款证明开立",
+      "label": "个人存款证明开立",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "人民币大额取款",
+      "label": "人民币大额取款",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贷款催收短信",
+      "label": "贷款催收短信",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人住房贷款新政",
+      "label": "个人住房贷款新政",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人住房贷款财政贴息政策",
+      "label": "个人住房贷款财政贴息政策",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人网银登录用户名设置规则",
+      "label": "个人网银登录用户名设置规则",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "电子银行注销",
+      "label": "电子银行注销",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "全国住房公积金查询",
+      "label": "全国住房公积金查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "乐知校园登录方式",
+      "label": "乐知校园登录方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "乐知校园身份绑定",
+      "label": "乐知校园身份绑定",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "智慧食堂登录方式",
+      "label": "智慧食堂登录方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "智慧食堂充值缴费方式",
+      "label": "智慧食堂充值缴费方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "智慧食堂绑定手机号或其他信息变更",
+      "label": "智慧食堂绑定手机号或其他信息变更",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "公司账户开户",
+      "label": "公司账户开户",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "询证函进度查询",
+      "label": "询证函进度查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "财互通香港账户查询",
+      "label": "财互通香港账户查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "企业e盾更新",
+      "label": "企业e盾更新",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人短信通知补缴方式",
+      "label": "个人短信通知补缴方式",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人短信通知无法正常接收",
+      "label": "个人短信通知无法正常接收",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "银衍转账介绍",
+      "label": "银衍转账介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "银期转账介绍",
+      "label": "银期转账介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "账户贵金属",
+      "label": "账户贵金属",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "贵金属积存提取",
+      "label": "贵金属积存提取",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行持仓基金净值查询",
+      "label": "手机银行持仓基金净值查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "基金赎回到账时间",
+      "label": "基金赎回到账时间",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人数币转钱包",
+      "label": "个人数币转钱包",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "还款业务咨询",
+      "label": "还款业务咨询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "还款记录查询",
+      "label": "还款记录查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "退款到账时间咨询",
+      "label": "退款到账时间咨询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "福气值（原积分）查询",
+      "label": "福气值（原积分）查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "福气值（原积分）有效期",
+      "label": "福气值（原积分）有效期",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "银行卡及账户数量查询",
+      "label": "银行卡及账户数量查询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "金融社保卡开户办理规定",
+      "label": "金融社保卡开户办理规定",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "金融社保卡补卡换卡",
+      "label": "金融社保卡补卡换卡",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "金融社保卡业务咨询",
+      "label": "金融社保卡业务咨询",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "swift介绍",
+      "label": "swift介绍",
+      "level": 1,
+      "source": "FAQ节点",
+      "hits": 0
+    },
+    {
+      "path": "个人账户查询",
+      "label": "个人账户查询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "个人账户查询/个人账户余额查询",
+      "label": "个人账户余额查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 5
+    },
+    {
+      "path": "个人账户查询/个人账户余额查询/全部货币余额查询",
+      "label": "全部货币余额查询",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "个人账户查询/个人账户余额查询/单货币余额查询",
+      "label": "单货币余额查询",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "个人账户查询/个人账户交易明细查询",
+      "label": "个人账户交易明细查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 3
+    },
+    {
+      "path": "密码",
+      "label": "密码",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "密码/借记卡取款密码重置",
+      "label": "借记卡取款密码重置",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "密码/信用卡密码",
+      "label": "信用卡密码",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "密码/电话银行密码",
+      "label": "电话银行密码",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "密码/电话银行密码/个人电话银行密码修改",
+      "label": "个人电话银行密码修改",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "密码/电话银行密码/电话银行密码重置",
+      "label": "电话银行密码重置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "密码/手机银行登录密码",
+      "label": "手机银行登录密码",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "密码/手机银行登录密码/手机银行登录密码修改",
+      "label": "手机银行登录密码修改",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "密码/手机银行登录密码/手机银行登录密码重置",
+      "label": "手机银行登录密码重置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失",
+      "label": "挂失",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失/自助挂失",
+      "label": "自助挂失",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失/自助挂失/借记卡自助挂失",
+      "label": "借记卡自助挂失",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失/自助挂失/信用卡自助挂失",
+      "label": "信用卡自助挂失",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失/自助挂失/账户自助挂失",
+      "label": "账户自助挂失",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失/人工挂失",
+      "label": "人工挂失",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失/人工挂失/借记卡人工挂失",
+      "label": "借记卡人工挂失",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "挂失/人工挂失/账户人工挂失",
+      "label": "账户人工挂失",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "挂失/人工挂失/信用卡人工挂失",
+      "label": "信用卡人工挂失",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "账户开户行查询",
+      "label": "账户开户行查询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 26
+    },
+    {
+      "path": "账户开户行查询/电话银行开户行查询",
+      "label": "电话银行开户行查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "账户开户行查询/手机银行开户行查询",
+      "label": "手机银行开户行查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "电话银行服务",
+      "label": "电话银行服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "电话银行服务/电话银行签约",
+      "label": "电话银行签约",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "电话银行服务/电话银行解约",
+      "label": "电话银行解约",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "电话银行服务/电话银行密码",
+      "label": "电话银行密码",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "电话银行服务/电话银行密码/个人电话银行密码修改",
+      "label": "个人电话银行密码修改",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "电话银行服务/电话银行密码/电话银行密码重置",
+      "label": "电话银行密码重置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "其他密码修改",
+      "label": "其他密码修改",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "即时外汇汇率查询",
+      "label": "即时外汇汇率查询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "即时外汇汇率查询/单笔汇率查询",
+      "label": "单笔汇率查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "即时外汇汇率查询/多笔汇率查询",
+      "label": "多笔汇率查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "即时外汇汇率查询/存款利率查询",
+      "label": "存款利率查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "牌价查询",
+      "label": "牌价查询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "牌价查询/当日人民币牌价查询",
+      "label": "当日人民币牌价查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "牌价查询/当日人民币牌价查询/单笔牌价查询",
+      "label": "单笔牌价查询",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "牌价查询/当日人民币牌价查询/多笔牌价查询",
+      "label": "多笔牌价查询",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "保险",
+      "label": "保险",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "保险/中银保险",
+      "label": "中银保险",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "保险/中银三星人寿保险",
+      "label": "中银三星人寿保险",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "中银国际证券",
+      "label": "中银国际证券",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "中银基金",
+      "label": "中银基金",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "手机银行及网上银行业务",
+      "label": "手机银行及网上银行业务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "其它个人及公司业务咨询",
+      "label": "其它个人及公司业务咨询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "账款、网点、汇率等查询业务",
+      "label": "账款、网点、汇率等查询业务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "投诉建议",
+      "label": "投诉建议",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 8
+    },
+    {
+      "path": "卡组织在线支付及代收业务",
+      "label": "卡组织在线支付及代收业务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 3
+    },
+    {
+      "path": "卡组织在线支付及代收业务/银联在线支付业务",
+      "label": "银联在线支付业务",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "卡组织在线支付及代收业务/银联在线支付业务/开通银联在线支付业务",
+      "label": "开通银联在线支付业务",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "卡组织在线支付及代收业务/银联在线支付业务/关闭银联在线支付业务",
+      "label": "关闭银联在线支付业务",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "卡组织在线支付及代收业务/银联在线支付业务/设置银联在线支付业务日限额",
+      "label": "设置银联在线支付业务日限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "卡组织在线支付及代收业务/卡组织代收业务",
+      "label": "卡组织代收业务",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "卡组织在线支付及代收业务/卡组织代收业务/关闭卡组织代收业务",
+      "label": "关闭卡组织代收业务",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "卡组织在线支付及代收业务/卡组织代收业务/设置卡组织代收业务日限额",
+      "label": "设置卡组织代收业务日限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "海外业务电话漫游",
+      "label": "海外业务电话漫游",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "高风险业务",
+      "label": "高风险业务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "账户资金安全",
+      "label": "账户资金安全",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 5
+    },
+    {
+      "path": "个人贷款查询",
+      "label": "个人贷款查询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 3
+    },
+    {
+      "path": "虚拟卡查询",
+      "label": "虚拟卡查询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "国债",
+      "label": "国债",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "国债/当日交易明细查询",
+      "label": "当日交易明细查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "国债/历史交易明细查询",
+      "label": "历史交易明细查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "国债/债券账户余额查询",
+      "label": "债券账户余额查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "国债/债券信息查询",
+      "label": "债券信息查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "企业年金查询",
+      "label": "企业年金查询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "企业年金查询/企业年金资产信息查询",
+      "label": "企业年金资产信息查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "企业年金查询/企业年金缴费信息查询",
+      "label": "企业年金缴费信息查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "企业年金查询/企业年金投资信息查询",
+      "label": "企业年金投资信息查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "企业年金查询/企业年金支付信息查询",
+      "label": "企业年金支付信息查询",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "企业年金密码修改",
+      "label": "企业年金密码修改",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "短信服务",
+      "label": "短信服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "短信服务/短信定制服务",
+      "label": "短信定制服务",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "短信服务/短信定制服务/动户通知短信服务",
+      "label": "动户通知短信服务",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "短信服务/短信定制服务/大额交易提醒短信服务",
+      "label": "大额交易提醒短信服务",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "短信服务/短信查询服务",
+      "label": "短信查询服务",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "短信服务/取消上行短信服务",
+      "label": "取消上行短信服务",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "短信服务/修改发送上行短信服务手机号码",
+      "label": "修改发送上行短信服务手机号码",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "信用卡业务",
+      "label": "信用卡业务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 18
+    },
+    {
+      "path": "军人服务热线",
+      "label": "军人服务热线",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "基金",
+      "label": "基金",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "自贸区服务",
+      "label": "自贸区服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "小额免密免签",
+      "label": "小额免密免签",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "小额免密免签/小额凭签名免密开通或关闭",
+      "label": "小额凭签名免密开通或关闭",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "小额免密免签/小额凭签名免密日限额设置",
+      "label": "小额凭签名免密日限额设置",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "转账",
+      "label": "转账",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "转账/延迟转账撤销",
+      "label": "延迟转账撤销",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "转账/延迟转账撤销/办理延迟转账撤销",
+      "label": "办理延迟转账撤销",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "转账/延迟转账撤销/延迟转账撤销状态查询",
+      "label": "延迟转账撤销状态查询",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "转账/B股银证转账",
+      "label": "B股银证转账",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "转账/B股银证转账/银行转证券",
+      "label": "银行转证券",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "转账/B股银证转账/证券转银行",
+      "label": "证券转银行",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "转账/B股银证转账/银行端账户余额查询",
+      "label": "银行端账户余额查询",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "转账/B股银证转账/股票保证金账户查询",
+      "label": "股票保证金账户查询",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "按键服务",
+      "label": "按键服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "临时解除交易限制",
+      "label": "临时解除交易限制",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 2
+    },
+    {
+      "path": "临时解除交易限制/临时解除客户信息不全交易限制",
+      "label": "临时解除客户信息不全交易限制",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 2
+    },
+    {
+      "path": "临时解除交易限制/临时解除证件过期交易限制",
+      "label": "临时解除证件过期交易限制",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "复兴壹号",
+      "label": "复兴壹号",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "老年服务",
+      "label": "老年服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "无法转账",
+      "label": "无法转账",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "无法转账/银行卡无法使用",
+      "label": "银行卡无法使用",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 3
+    },
+    {
+      "path": "无法转账/银行卡无法使用/借记卡无法使用",
+      "label": "借记卡无法使用",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "无法转账/银行卡无法使用/信用卡无法使用",
+      "label": "信用卡无法使用",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "无法转账/转账限额",
+      "label": "转账限额",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "无法转账/转账限额/个人网银转账限额",
+      "label": "个人网银转账限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "无法转账/转账限额/手机银行转账限额",
+      "label": "手机银行转账限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "无法转账/转账限额/atm转账限额",
+      "label": "atm转账限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "无法转账/境内转账汇款信息有误",
+      "label": "境内转账汇款信息有误",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置",
+      "label": "交易限额设置",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置",
+      "label": "借记卡交易限额设置",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/电话银行设置借记卡交易限额",
+      "label": "电话银行设置借记卡交易限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/电话银行设置借记卡交易限额-POS消费日限额设置",
+      "label": "电话银行设置借记卡交易限额-POS消费日限额设置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/电话银行设置借记卡交易限额-ATM转账日限额设置",
+      "label": "电话银行设置借记卡交易限额-ATM转账日限额设置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/电话银行设置借记卡交易限额-小额凭签名免密日限额设置",
+      "label": "电话银行设置借记卡交易限额-小额凭签名免密日限额设置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/电话银行设置借记卡交易限额-设置银联在线支付业务日限额",
+      "label": "电话银行设置借记卡交易限额-设置银联在线支付业务日限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/电话银行设置借记卡交易限额-设置卡组织代收业务日限额",
+      "label": "电话银行设置借记卡交易限额-设置卡组织代收业务日限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/电话银行设置借记卡交易限额-订购交易日限额设置",
+      "label": "电话银行设置借记卡交易限额-订购交易日限额设置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/手机银行设置借记卡交易限额",
+      "label": "手机银行设置借记卡交易限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 10
+    },
+    {
+      "path": "交易限额设置/借记卡交易限额设置/网上银行设置借记卡交易限额",
+      "label": "网上银行设置借记卡交易限额",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/快捷支付限额设置",
+      "label": "快捷支付限额设置",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/快捷支付限额设置/微信支付限额设置",
+      "label": "微信支付限额设置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/快捷支付限额设置/支付宝限额设置",
+      "label": "支付宝限额设置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/快捷支付限额设置/京东支付限额设置",
+      "label": "京东支付限额设置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/快捷支付限额设置/抖音支付限额设置",
+      "label": "抖音支付限额设置",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "交易限额设置/信用卡交易限额设置",
+      "label": "信用卡交易限额设置",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "个人养老金",
+      "label": "个人养老金",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "个人养老金/个人养老金账户开立",
+      "label": "个人养老金账户开立",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "个人养老金/个人养老金缴费",
+      "label": "个人养老金缴费",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "个人养老金/个人养老金税收优惠",
+      "label": "个人养老金税收优惠",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "换卡业务",
+      "label": "换卡业务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "换卡业务/借记卡换卡",
+      "label": "借记卡换卡",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 2
+    },
+    {
+      "path": "换卡业务/借记卡换卡/借记卡到期破损换卡",
+      "label": "借记卡到期破损换卡",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "换卡业务/借记卡换卡/借记卡挂失换卡",
+      "label": "借记卡挂失换卡",
+      "level": 3,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "换卡业务/信用卡换卡",
+      "label": "信用卡换卡",
+      "level": 2,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "来华通",
+      "label": "来华通",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "铁路e卡通",
+      "label": "铁路e卡通",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "数币员工卡",
+      "label": "数币员工卡",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "英文服务",
+      "label": "英文服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "粤语服务",
+      "label": "粤语服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "外交人员专属服务",
+      "label": "外交人员专属服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "友好问候",
+      "label": "友好问候",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 17
+    },
+    {
+      "path": "感谢语",
+      "label": "感谢语",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "结束语",
+      "label": "结束语",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 5
+    },
+    {
+      "path": "系统疑问",
+      "label": "系统疑问",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "抱怨",
+      "label": "抱怨",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "业务咨询",
+      "label": "业务咨询",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 13
+    },
+    {
+      "path": "简短词",
+      "label": "简短词",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 28
+    },
+    {
+      "path": "答案播报",
+      "label": "答案播报",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 4
+    },
+    {
+      "path": "其他语种服务",
+      "label": "其他语种服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "NULL",
+      "label": "NULL",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "拒识临时",
+      "label": "拒识临时",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "重听",
+      "label": "重听",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "确认账号",
+      "label": "确认账号",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "重新输入",
+      "label": "重新输入",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "更换手机号码",
+      "label": "更换手机号码",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "更换账号",
+      "label": "更换账号",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "短信发送",
+      "label": "短信发送",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 7
+    },
+    {
+      "path": "主菜单",
+      "label": "主菜单",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "返回",
+      "label": "返回",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "帮助",
+      "label": "帮助",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 3
+    },
+    {
+      "path": "业务列表",
+      "label": "业务列表",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 1
+    },
+    {
+      "path": "退出",
+      "label": "退出",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "肯定",
+      "label": "肯定",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 17
+    },
+    {
+      "path": "否定",
+      "label": "否定",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 7
+    },
+    {
+      "path": "集外",
+      "label": "集外",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 24
+    },
+    {
+      "path": "中银富登",
+      "label": "中银富登",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    },
+    {
+      "path": "人工服务",
+      "label": "人工服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 164
+    },
+    {
+      "path": "本地特有服务",
+      "label": "本地特有服务",
+      "level": 1,
+      "source": "业务菜单节点",
+      "hits": 0
+    }
+  ],
+  "label_counts": [
+    {
+      "label": "人工服务",
+      "hits": 164
+    },
+    {
+      "label": "简短词",
+      "hits": 28
+    },
+    {
+      "label": "账户开户行查询",
+      "hits": 26
+    },
+    {
+      "label": "集外",
+      "hits": 24
+    },
+    {
+      "label": "信用卡业务",
+      "hits": 18
+    },
+    {
+      "label": "友好问候",
+      "hits": 17
+    },
+    {
+      "label": "肯定",
+      "hits": 17
+    },
+    {
+      "label": "业务咨询",
+      "hits": 13
+    },
+    {
+      "label": "手机银行设置借记卡交易限额",
+      "hits": 10
+    },
+    {
+      "label": "投诉建议",
+      "hits": 8
+    },
+    {
+      "label": "否定",
+      "hits": 7
+    },
+    {
+      "label": "短信发送",
+      "hits": 7
+    },
+    {
+      "label": "借记卡核心预留手机号码修改",
+      "hits": 6
+    },
+    {
+      "label": "账户资金安全",
+      "hits": 5
+    },
+    {
+      "label": "结束语",
+      "hits": 5
+    },
+    {
+      "label": "借记卡业务咨询",
+      "hits": 5
+    },
+    {
+      "label": "个人证件更新",
+      "hits": 5
+    },
+    {
+      "label": "个人账户余额查询",
+      "hits": 5
+    },
+    {
+      "label": "答案播报",
+      "hits": 4
+    },
+    {
+      "label": "借记卡卡号或账号查询",
+      "hits": 4
+    },
+    {
+      "label": "个人账户交易明细查询",
+      "hits": 3
+    },
+    {
+      "label": "网点信息查询及预约排队",
+      "hits": 3
+    },
+    {
+      "label": "卡组织在线支付及代收业务",
+      "hits": 3
+    },
+    {
+      "label": "银行卡无法使用",
+      "hits": 3
+    },
+    {
+      "label": "帮助",
+      "hits": 3
+    },
+    {
+      "label": "网银业务咨询",
+      "hits": 3
+    },
+    {
+      "label": "快捷支付解约",
+      "hits": 3
+    },
+    {
+      "label": "个人贷款查询",
+      "hits": 3
+    },
+    {
+      "label": "借记卡换卡",
+      "hits": 2
+    },
+    {
+      "label": "借记卡卡状态查询",
+      "hits": 2
+    },
+    {
+      "label": "手机银行申请贷款的方式",
+      "hits": 2
+    },
+    {
+      "label": "临时解除交易限制",
+      "hits": 2
+    },
+    {
+      "label": "临时解除客户信息不全交易限制",
+      "hits": 2
+    },
+    {
+      "label": "转账汇款到账时间",
+      "hits": 1
+    },
+    {
+      "label": "电话银行开户行查询",
+      "hits": 1
+    },
+    {
+      "label": "卡组织代收业务",
+      "hits": 1
+    },
+    {
+      "label": "借记卡无法使用",
+      "hits": 1
+    },
+    {
+      "label": "借记卡到期破损换卡",
+      "hits": 1
+    },
+    {
+      "label": "转账",
+      "hits": 1
+    },
+    {
+      "label": "手机银行转账方法",
+      "hits": 1
+    },
+    {
+      "label": "抱怨",
+      "hits": 1
+    },
+    {
+      "label": "借记卡核心预留手机号码查询",
+      "hits": 1
+    },
+    {
+      "label": "转账限额",
+      "hits": 1
+    },
+    {
+      "label": "跨境汇出汇款办理方法",
+      "hits": 1
+    },
+    {
+      "label": "外币兑换咨询",
+      "hits": 1
+    },
+    {
+      "label": "个人结汇购汇办理方法",
+      "hits": 1
+    },
+    {
+      "label": "手机银行及网上银行业务",
+      "hits": 1
+    },
+    {
+      "label": "其它个人及公司业务咨询",
+      "hits": 1
+    },
+    {
+      "label": "业务列表",
+      "hits": 1
+    },
+    {
+      "label": "借记卡挂失换卡",
+      "hits": 1
+    },
+    {
+      "label": "老年服务",
+      "hits": 1
+    },
+    {
+      "label": "借记卡人工挂失",
+      "hits": 1
+    },
+    {
+      "label": "柜台人民币取款流程",
+      "hits": 1
+    }
+  ]
+}

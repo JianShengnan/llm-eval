@@ -10,8 +10,12 @@ datasets/
     schema.json     # 仅 json_schema 任务使用：意图枚举 / 槽位枚举 / JSON Schema
 ```
 
-任务名从 `geval/tasks.py::TASK_REGISTRY` 取：`ceval` `cmmlu` `mmlu` `mmlu_pro` `arc` `agieval`
-`gsm8k` `math` `bbh` `ifeval` `json_schema`。
+任务名从 `geval/tasks.py::TASK_REGISTRY` 取（共 12 个）：`ceval` `cmmlu` `mmlu` `mmlu_pro` `arc` `agieval`
+`gsm8k` `math` `bbh` `ifeval` `json_schema` `intent_json`。
+
+> 加载时会按题面**自动去重**（可用任务级 `"dedupe": false` 关闭）。
+> 所以 `geval count` 报的条数通常小于 JSONL 原始行数：ceval 1346→1337、
+> cmmlu 11582→11408、bbh 6511→5268。评测与进度条都以去重后的数为准。
 
 ## 字段格式
 
@@ -67,7 +71,8 @@ python scripts/prepare_datasets.py --task ifeval --out datasets/ifeval --split t
 
 ## 成本控制：分层抽样
 
-全量跑 `C-Eval(1346) + CMMLU(11582) + MMLU(14042) + GSM8K(1319)` 请求量很大。
+全量跑 `C-Eval(1346) + CMMLU(11582) + GSM8K(1319) + BBH(6511)` 请求量很大
+（题面去重后分别为 1337 / 11408 / 1319 / 5268）。
 用 `--limit` 按 `subject` 分层等比抽样，几百条就能得到与全量高度相关的**排序**结论：
 
 ```bash

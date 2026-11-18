@@ -37,9 +37,11 @@ INCLUDE_DIRS = ["geval", "docs", "scripts", "datasets", "wheels"]
 CODE_ONLY_DIRS = ["geval", "docs", "scripts"]
 INCLUDE_FILES = [
     "README.md",
+    "HANDOVER.md",
     "requirements.txt",
     "config.example.json",
     "config.smoke.json",
+    "config.professional.json",
     ".gitignore",
 ]
 # 排除：运行产物、缓存、下载日志、Python 缓存

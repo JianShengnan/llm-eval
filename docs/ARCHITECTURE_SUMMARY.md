@@ -15,30 +15,38 @@
 
 框架不只输出准确率，还强制输出**置信区间、配对显著性检验、时延分布和解析失败率**，让模型间差异的判定有据可依。
 
+> **当前状态（2026-11-10）**：代码完整、离线自检全 PASS；6 个数据集已就绪；
+> 真实端点仅完成配置，`runs/` 下只有 mock 产物的 smoke 系列，**尚未执行真实评测**。
+> 交接细节见 [`HANDOVER.md`](../HANDOVER.md)。
+
 ---
 
 ## 2 仓库结构总览
 
 ```
 llm-general-eval/
-├── geval/                    # 核心框架（14 个模块，纯标准库）
-│   ├── __main__.py           # CLI 入口：6 个子命令
+├── geval/                    # 核心框架（16 个模块，纯标准库）
+│   ├── __main__.py           # CLI 入口：9 个子命令
 │   ├── runner.py             # 编排引擎：并发执行、断点续跑、指纹
 │   ├── client.py             # OpenAI 兼容客户端（并发安全、重试、缓存）
 │   ├── http.py               # urllib 传输层（代理策略、退避重试）
+│   ├── reqbody_gateway.py    # 请求体网关适配（现网通道入参改写）
 │   ├── datasets.py           # 数据加载：多格式归一化、去重、分层抽样
 │   ├── prompts.py            # 3 种 prompt 协议 + 各任务模板
 │   ├── answers.py            # 答案抽取（选项/数值/JSON）+ 思维链剥离
 │   ├── metrics.py            # 统计：Wilson CI、bootstrap、McNemar、时延
-│   ├── tasks.py              # 任务注册表（11 个内置基准）
+│   ├── tasks.py              # 任务注册表（12 个内置基准）
 │   ├── ifeval.py             # 24 类指令遵循校验器
+│   ├── merge.py              # 多个 run 目录合并（分批并行后汇总）
 │   ├── report.py             # 报告生成：Markdown + 自包含 HTML（内联 SVG）
+│   ├── util.py               # 通用小工具（JSON/路径/时间）
 │   └── mock.py               # 确定性 mock 模型（离线自检用）
-├── datasets/                 # 评测数据集（JSONL 格式）
+├── datasets/                 # 评测数据集（JSONL 格式，已备 ceval/cmmlu/gsm8k/bbh/ifeval）
 │   └── json_schema/          # 意图+槽位示例（含 schema.json）
 ├── scripts/                  # 运维与数据准备脚本
 ├── docs/                     # 文档（运行手册、方法论、覆盖度）
-├── config.example.json       # 配置模板（5 个模型已预定义）
+├── config.example.json       # 5 对象可选模板（盘古7B / Qwen8B 的 pre、post + Qwen3-32B）
+├── config.json               # 当前实际运行配置（单模型 llm-chat-core，6 个任务）
 ├── config.smoke.json         # 干跑配置（mock 模型，不连真实服务）
 └── requirements.txt          # 声明零第三方依赖
 ```
@@ -68,7 +76,7 @@ llm-general-eval/
 ```
 config.json + datasets/*.jsonl
     → 加载归一化 → 分层抽样 → prompt 组装
-    → 并发请求 5 个模型端点
+    → 并发请求配置中的模型端点（当前 1 个）
     → 答案抽取 → 统计打分
     → manifest + details + summary
     → report.html + report.md
@@ -89,7 +97,7 @@ python -m geval selftest
 ### 第 2 步：了解内置任务
 
 ```bash
-python -m geval list-tasks          # 查看 11 个内置基准
+python -m geval list-tasks          # 查看 12 个内置基准
 python -m geval preview --task ceval       # 看实际发给模型的 prompt
 python -m geval preview --task json_schema  # 与意图识别最贴近的任务
 ```
@@ -102,30 +110,38 @@ python -m geval run --config config.smoke.json --smoke
 
 验证配置解析、数据加载、报告生成的完整链路，不连真实模型。
 
-### 第 4 步：连接真实模型
+### 第 4 步：连接真实模型（当前单模型口径）
+
+仓库已带 `config.json`（单模型 `llm-chat-core`、6 个任务），只需改模型段：
 
 ```bash
-cp config.example.json config.json
-# 编辑 config.json，填入实际的模型 base_url 和 model 名称
+# 编辑 config.json，填入实际的 base_url 和 model 名称（不要用 example 覆盖）
 
 python -m geval probe --config config.json           # 端点探活
-python -m geval run --config config.json --smoke --limit 8 \
-    --models pangu7b-pre,qwen8b-pre,qwen3-32b         # 先验证接线
+python -m geval run --config config.json --smoke --limit 8   # 先验证接线
+```
+
+若要启用 5 对象模板，先另存再改：
+
+```bash
+cp config.example.json config.5objects.json
+python -m geval run --config config.5objects.json --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
 ```
 
 ### 第 5 步：正式评测
 
 ```bash
-# 阶段 1：微调前基线（3 个模型）
-python -m geval run --config config.json \
-    --models pangu7b-pre,qwen8b-pre,qwen3-32b --resume
-
-# 阶段 1.5：微调后全量（5 个模型，自动产出 pre→post 对比）
+# 当前单模型：6 个任务，支持断点续跑
 python -m geval run --config config.json --resume
 
 # 生成报告
-python -m geval report --run runs/geval-general-5objects
+python -m geval report --run runs/geval-llm-chat-core
+
+# 如需按维度加权（需任务条目带 dimension 字段）
+python -m geval report --run runs/geval-llm-chat-core --weights chinese=0.35,reasoning=0.30,instruction=0.30,math=0.05
 ```
+
+5 对象模板流程则在阶段 1/1.5 分别跑 `config.5objects.json`，报告会自动产出 pre→post 对比。
 
 报告产物在 `runs/<run_name>/` 下：`report.html`（自包含，可直接发群）和 `report.md`。
 
@@ -158,7 +174,15 @@ python -m geval report --run runs/geval-general-5objects
 
 ---
 
-## 7 被测对象（5 个模型）
+## 7 被测对象
+
+**当前实际配置**（`config.json`）：
+
+| 模型 ID | 说明 | 任务数 |
+|---|---|---|
+| `llm-chat-core` | 现网聊天主通道 | 6 |
+
+**5 对象模板**（`config.example.json`，可选）：
 
 | 模型 ID | 说明 | 阶段 |
 |---|---|---|
@@ -174,6 +198,7 @@ python -m geval report --run runs/geval-general-5objects
 
 | 文档 | 何时阅读 |
 |---|---|
+| [`HANDOVER.md`](../HANDOVER.md) | **接手第一份**：现状快照、特性清单、阅读顺序、背景知识、待办 |
 | [`README.md`](../README.md) | 完整使用说明、配置字段、报告解读 |
 | [`docs/INTRANET_RUNBOOK.md`](INTRANET_RUNBOOK.md) | 内网部署、五步执行、故障排查 |
 | [`docs/EVAL_METHODOLOGY.md`](EVAL_METHODOLOGY.md) | 与开源框架的关系、可比性边界 |
@@ -191,4 +216,4 @@ python -m geval report --run runs/geval-general-5objects
 
 ---
 
-*生成时间: 2026-09-17 | 技能: system-modeler + graphviz | 置信度: high*
+*生成时间: 2026-09-17（2026-11-02 按当前源码与配置校正）| 技能: system-modeler + graphviz | 置信度: high*

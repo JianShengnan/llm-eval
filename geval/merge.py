@@ -162,8 +162,13 @@ def merge_runs(
     pairs: Optional[List[List[str]]] = None,
     make_report: bool = True,
     quiet: bool = False,
+    weights: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
     """合并多个 run 目录到 dst，并重建 summary.json / manifest.json。
+
+    weights 为综合分权重覆盖项，只在出报告时生效，不影响任何逐样本结果。
+    合并目录会补写一份 config.json（继承各源的 tasks 与 dimension_weights），
+    这样后续单独跑 `report` 时权重仍然可读。
 
     返回 {"run_dir", "sources", "tasks", "models", "conflicts", "warnings", "report"}。
     """
@@ -308,6 +313,32 @@ def merge_runs(
     )
     write_json(os.path.join(dst_abs, "manifest.json"), merged_manifest)
 
+    # ---- 补写 config.json ----
+    # 合并目录原本没有 config.json（各源的只存到 merged_sources/），而报告要从
+    # run_dir/config.json 读任务条目上的 dimension / weight。这里把各源配置并一份，
+    # 任务按 tag/name 去重，保证合并后仍能按维度算综合分。
+    merged_cfg: Dict[str, Any] = {}
+    merged_tasks: List[Dict[str, Any]] = []
+    seen_keys = set()
+    for s in source_notes:
+        src_cfg = read_json(os.path.join(s["dir"], "config.json"), default={}) or {}
+        if src_cfg and not merged_cfg:
+            merged_cfg = dict(src_cfg)
+        if "dimension_weights" in src_cfg and "dimension_weights" not in merged_cfg:
+            merged_cfg["dimension_weights"] = src_cfg["dimension_weights"]
+        for ts in src_cfg.get("tasks") or []:
+            if not isinstance(ts, dict):
+                continue
+            key = ts.get("tag") or ts.get("name")
+            if not key or key in seen_keys:
+                continue
+            seen_keys.add(key)
+            merged_tasks.append(ts)
+    if merged_cfg or merged_tasks:
+        merged_cfg["tasks"] = merged_tasks
+        merged_cfg["_merged_note"] = "由 geval merge-runs 合并各源 config.json 生成，供报告读取综合分权重"
+        write_json(os.path.join(dst_abs, "config.json"), merged_cfg)
+
     out: Dict[str, Any] = {
         "run_dir": dst_abs,
         "sources": [s["dir"] for s in source_notes],
@@ -325,7 +356,7 @@ def merge_runs(
         if not baseline:
             base_cfg = read_json(os.path.join(source_notes[0]["dir"], "config.json"), default={}) or {}
             baseline = ((base_cfg.get("report") or {}) or {}).get("baseline")
-        paths = build_report(dst_abs, baseline=baseline, pairs=pairs)
+        paths = build_report(dst_abs, baseline=baseline, pairs=pairs, weights=weights)
         out["report"] = paths
 
     if not quiet:

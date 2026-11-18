@@ -1,0 +1,65 @@
+{
+  "_说明_1": "阶段 4 专业能力评测：语音导航意图树路由。默认使用 mock 模型，可完全离线跑通全链路。",
+  "_说明_2": "正式评测请把 models[0] 换成下方 _真实端点模板 的内容，并从 config.json 复制真实 api_key；temperature 保持 0 以启用确定性缓存。",
+  "_说明_3": "数据准备：python scripts/prepare_professional_dataset.py（生成 datasets/intent_routing/test.jsonl + labels.json）。",
+  "_说明_4": "运行：python -m geval run --config config.professional.json --resume ；专项报告：python scripts/professional_report.py runs/geval-professional-intent",
+  "_说明_5": "dedupe 必须为 false：全部样本共享同一份 498 节点候选树，题面前 200 字相同，通用去重会把 432 条压成 1 条。",
+  "_说明_6": "cost 单价按每 1K token 计，填 0 表示不估算成本（不会臆造单价）。",
+
+  "run_name": "geval-professional-intent",
+  "output_dir": "runs",
+  "data_root": "datasets",
+  "seed": 42,
+
+  "concurrency": 4,
+  "request_timeout_s": 180,
+  "retries": 3,
+  "proxy": "bypass",
+
+  "cache": true,
+  "cache_dir": ".cache/geval",
+
+  "models": [
+    {
+      "id": "intent-mock",
+      "label": "意图评测-离线自检",
+      "provider": "mock",
+      "accuracy": 0.78,
+      "noise": 0.12,
+      "error_rate": 0.0,
+      "latency_ms": 420,
+      "latency_jitter_ms": 120,
+      "seed": 7
+    }
+  ],
+
+  "_真实端点模板": {
+    "id": "llm-chat-core",
+    "label": "llm-chat-core",
+    "provider": "openai_compat",
+    "base_url": "http://<host>:<port>/bocai-chat/agent/v1",
+    "api_key": "<从 config.json 复制，不要提交到版本库>",
+    "model": "llm-chat-core",
+    "params": { "temperature": 0, "max_tokens": 64 },
+    "extra_body": { "chat_template_kwargs": { "enable_thinking": false } },
+    "supports_logprobs": false,
+    "rate_limit_qps": 2
+  },
+
+  "tasks": [
+    {
+      "name": "intent_routing",
+      "tag": "intent-routing",
+      "split": "test",
+      "num_fewshot": 0,
+      "protocol": "direct",
+      "mode": "gen",
+      "max_tokens": 64,
+      "dedupe": false,
+      "dimension": null
+    }
+  ],
+
+  "report": { "bootstrap": 2000, "alpha": 0.05 },
+  "cost": { "prompt_per_1k": 0.0, "completion_per_1k": 0.0 }
+}

@@ -288,7 +288,9 @@ $LM --model local-completions \
 # 1. lm-eval 跑一个小子集（例如每任务 200 条），拿到锚点数字
 # 2. geval 跑同一批样本，配置对齐：
 #    "num_fewshot": 5, "mode": "loglikelihood", "primary": "acc_norm", "limit": 200
-python -m geval run --config config.json --tasks ceval-likelihood --limit 200
+#    注意 --tasks 只匹配 name，不含 tag；想只跑 likelihood 变体，
+#    请在配置里只保留那一条 ceval 条目（或另存一份 config）
+python -m geval run --config config.json --tasks ceval --limit 200
 
 # 3. 比对两者差值
 ```

@@ -1,5 +1,5 @@
 # 框架源码与文档清单（不含 wheel）
-# 生成时间：2026-09-22 15:14:25
+# 生成时间：2026-11-10 20:01:44
 # 打包模式：仅源码（不含 datasets/ 与 wheels/）
 # 列：sha256  大小(字节)  类别  相对路径
 #   类别 code/script 为框架本体，内网必须与本清单一致；
@@ -7,39 +7,50 @@
 #        data 为数据集，可能是你自己准备的，不做判定。
 # 用法（内网机、项目根目录）：python3 scripts/verify_install.py
 
-9cc16b0c4ecf0e1cc8e92a37bb94519d227b4da598bc48838bceee2e8427349d        601  doc      .gitignore
-7dc0b080d3ea5cabe92c8a4030724626443a6e568f7266db6caae56f63892773      21414  doc      README.md
-df406eaf3cbb23bf229f5df03de41a12570882313b193933bbaedbb08ea65d3e       4182  doc      config.example.json
-f7d2b0603c712496bb08dd224ddf8279c71e388afc4e560b33463edca31c0c4a       1849  doc      config.smoke.json
-c25bd0e0e04f89b88b8dec49d3d185976c9d93e0f331b0099d585899b17c270b       7756  doc      docs/ARCHITECTURE_SUMMARY.md
-50598fff2a42e617d72fd555fdda2d8bc7bf2a8a697dcbd6769a89b2674fc170      16908  doc      docs/BATCH_RUNBOOK.md
-1d1a2fdadc29e219eae55ebd0097983ad26e18389fcc63c2f94142779121028b       9626  doc      docs/COVERAGE.md
-2e1929843f228b423dc53f2f223467adfbc44db0c114160d462fe8b4a8d43b06      19001  doc      docs/EVAL_METHODOLOGY.md
-1a132235fb49fa427227e60173421972d2cef7b1a3f67a7b691c5c88938860c4      29522  doc      docs/INTRANET_RUNBOOK.md
-b920f4109961507665b593b6ee683ffe2f91003154c89e097cb6f5822930570a      14171  doc      docs/OFFLINE_DEPLOY.md
+0852f5cc290f2ce4fd570927b2b8b5029a62041f080491480582600ad4908075        613  doc      .gitignore
+f39402a6b0a64f62c46244d54ed4a35d66f0f1886eeebafc516b372865eec79f      27776  doc      HANDOVER.md
+08dfe60dcb38b7ff1ac537ac8d5315cf5fe3cd7715f1d4b675d94b831cd906b2      26408  doc      README.md
+c687236fb2458087c0c790defc95d45114e8b32da4d3b1827aca2fc9b48bd3fb       5635  doc      config.example.json
+166d9f2cbd52978f4627f527cf0ab9a8e7178f6f83416ef62deaf8d1f22c4c10       2272  doc      config.professional.json
+792550a1749bfb5cceb9474e8136d8fda58dc61c0ae46c20c4cffa6363b362d6       2008  doc      config.smoke.json
+07d1d91bff6528853625e0eec0e2f704c7038fed3313f3fe2d1c11ee176fc2fd       9237  doc      docs/ARCHITECTURE_SUMMARY.md
+800a088829263becb55cb39e1d1aed4bc4a4a8b4d7a872cc2e1c03a55f74bde4      18341  doc      docs/BATCH_RUNBOOK.md
+7520de9904a3c525ecce09c0cb7e39b6df190a0c9da0599836a0eeb4951b0fe6      10138  doc      docs/COVERAGE.md
+671fa66115a487df8079df6dcd9016e8873b7bea1eaa73c266bf7965e3e756b8      19595  doc      docs/EVAL_METHODOLOGY.md
+60842489f5fb3f19c1fd01bafcfa5dc12ee07f1a8edc2fc245ef7bcfae2e93a7      32570  doc      docs/INTRANET_RUNBOOK.md
+233652a461c9806ae32a19c4042c3aecf5b1acb00284183e7747ca14e5fd7d0b      14321  doc      docs/OFFLINE_DEPLOY.md
+fa24a390596e6738f68a5309d59588374d946f24e55389f19b7a488e04f44c53      19834  doc      docs/PROFESSIONAL_RUNBOOK.md
 beeb8759e69381bf1e8b8c95b58cb80d548fe6ad01e6e6bd5b21c1307bc49234       5597  doc      docs/architecture-overview.dot
 36c1b2e4a201d75b707061f3d7a713bad23263f08145269ccf350e719ca2029c       3014  doc      docs/dataflow.dot
+fc71649461fd7b267faebd7e6225b88a038a9f0d5cd96b0d252db7c34fb4fd0d       6148  code     geval/.DS_Store
 363a0af963f417ae7cf69f758b95b259ae0cff833b896ef39c7fc644d69a1c36        767  code     geval/__init__.py
-762bd8674db6366e696f22038cb3f9a08fa5782a3599e7091c7423b653567bdd      55380  code     geval/__main__.py
-bb7b6bffe31b37ce503f9e465646b50a5eb2a4bc3c19f2de9dc82267abc9c570      11174  code     geval/answers.py
-1c97cd595095b3f5ff75993745e0981a83b0dddaa041e0db2a465ebf699deb1f      20939  code     geval/client.py
+4ec16820342bb81b331a7185a79806f7e4f88e8d343e934c651a9f9d1637ddef      57093  code     geval/__main__.py
+0af77c7e0815b8ae3913ff981fd043618718d44e9fbc62c5488273f11ace278d      11813  code     geval/answers.py
+798d7dee0249fb75d81694388c41d774bb78b84d1191e12168ba87b53a51fd30      23008  code     geval/client.py
 2e7b8fb4d9486719530eb3772af93888dbf3ab57f10375598611853de775870a      20558  code     geval/datasets.py
-bd591173b516addd2f6b9a17a5d9e84fba4909f170b30597d27e9ffd5f849c69       6839  code     geval/http.py
+444086e664954ba6b0b55de1087e865157919456a168a33d7e644902bbab00a5       7983  code     geval/http.py
 5f1d579dbbb9ce542241025c635c5c0bce34e837ffc435515264480f7b58d2eb      10936  code     geval/ifeval.py
-ed75e155cfc5c38e72ce911f1280a1dff0c9f17fac6f3ee66d9f86cead9bef63      14271  code     geval/merge.py
-97151a587a6204e71245ae059ed44ced45df2db021d175f0626d2edb0c329044      10524  code     geval/metrics.py
-1932a55003a9036ea51eeb633cefc879c8eda14d1de5c92612740aa213335d45      14872  code     geval/mock.py
+e321e8144c327047b579bd576b4ce083ed914e5b9af445404b986bb4d216764f      15938  code     geval/merge.py
+d33e0216ff1e49c3dc3e3bb9f344bc46e78d8f4c7e0bcda0526759d87a0e1f10      11931  code     geval/metrics.py
+3a3f594f6dc144a2096352659a49d71530043df94d25007f76f2e882767c0e3b      15526  code     geval/mock.py
+fe3540e7ec1dd481995799a8dea62c38f6af2e5d962e11111809b8a55af53ea2      16161  code     geval/professional.py
 85966f64256b6d1f0490939738d2882365465a99c245504e92034c9168966b4e      13941  code     geval/prompts.py
-466cdae70e644f84b703b790fae149bd09e790fe6a422e5eab63f15221e9e6f8      49389  code     geval/report.py
+a05df9ed7e931d43db4354451206fd3f822ddd7178fd54376aac3e18a35db38d      59643  code     geval/report.py
 5d53b6d14aaf4877e4f3b6a8642dc185e2567c6a881d208013e7e11ca7431fbe       3763  code     geval/reqbody_gateway.py
-629b13e8fac1c6a7caecd12368d21f935565184fbfb2e5c5f404f4bc139c5033      19159  code     geval/runner.py
-86bf5e0599f0a7f3027ea801ab6cca0b30ad0ee6a65438a36803e92cfa2d4c3f      28263  code     geval/tasks.py
+64bb25bf7295d9dbd0434ab30099966c156ef7c14666c6800c375144c0d3e78c      21344  code     geval/runner.py
+8baa2ed7f928e17c19d60eea055db955c78c00c44b29e2ec7bb4b9666af4780c      30583  code     geval/tasks.py
+6bb9a3b09b033a759f1a7456d8a5bee731714c843cac81aafdfbdd9af3d12060       5372  code     geval/telemetry.py
 0906510e3f28b3c1943ad9469d73e52ed206eab1bd4e839b7f61ab4b0787ac55       9255  code     geval/util.py
 883a794a3482737a3d8c8a9e3850505dced5d8ccfc2986bfd1cbef96c0ade990        566  doc      requirements.txt
+241f88034bce0019094b9c9074c284045deeb8883aa6f6359adc0f5dabfae944      10030  script   scripts/diagnose.py
 fc174fa20fa8b489abd207a35a3c47d80acc0011d786439d6500803ef61474d9      12448  script   scripts/download_wheels.sh
 f108dff2b969b0d57f40fc6ab0cd77a99809fa15319a668f4acabe3ddc8d536e       8252  script   scripts/install_offline.sh
-0face9e3b017945768abbf66a1f027e0c2f031366deedc7c1c3a9f3eb766bf2e       9722  script   scripts/pack_bundle.py
+7e7028061246941b0895811bd753c693762ead2f2ac953a6549b45dc8a5d351f       9773  script   scripts/pack_bundle.py
 6f5763815603b451bf23c2b545d64ddc62ca84022779884f66fcd63cbe1861b1       9832  script   scripts/prepare_datasets.py
-1d2a67c24b1aac74f20859e49823e34b3d59b253c03b203ad8c16026c59c7614       4015  script   scripts/run_stage1.sh
+9ee1fb5127662d0c6d0506b8e25df87b680bcad083a5b4a6289fe7039240bea4       6600  script   scripts/prepare_professional_dataset.py
+27fa639de64ffd1b8ef180f0128a74535235dcdf77ed50a4033344ad26ebb8f5      15843  script   scripts/professional_report.py
+488fc8a85efcab618f98a7cf0b8acb5e7b8cc0716352865ce174bcff06d8819f       8699  script   scripts/rescore.py
+df1f018bb719b569c95c36d93bbfa64ad6ca073b9d2e442b76aac694c1113048       9860  script   scripts/run_professional_eval.py
+a407eed2fb39ebf8f82284d9e59d3d92d89bcf6df23dcdc9c305346502077880       4137  script   scripts/run_stage1.sh
 f631a916e8c0b63ea3d5ff97b224e17b5edf699c9806c534707f86b190e5a298       3355  script   scripts/verify_deps.py
 02d23b913b2142fe8ba454c24a1a35e811605a0db467ead74c1af1d1c4b43424       8657  script   scripts/verify_install.py

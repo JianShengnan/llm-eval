@@ -146,8 +146,12 @@ def build_impact_section(
     tasks: Sequence[str],
     *,
     alpha: float = 0.05,
+    weights: Optional[Dict[str, float]] = None,
 ) -> List[str]:
     """生成「微调影响评估」章节：逐任务的 pre→post 差值与判定 + 总体代价汇总。
+
+    weights 非空时，「宏平均变化」按综合分权重加权，与综合分口径保持一致 ——
+    否则同一份数据会在两个章节给出互相矛盾的总体结论。
 
     只有至少一对模型都跑过时才输出内容 —— 否则（例如手上只有一个模型通道做链路验证）
     会输出一堆「缺少结果，跳过」的空章节，反而让人以为流程出了问题。
@@ -163,6 +167,7 @@ def build_impact_section(
 
         rows: List[List[str]] = []
         deltas: List[float] = []
+        delta_w: List[float] = []
         degraded: List[str] = []
         improved: List[str] = []
         invalid = False
@@ -183,7 +188,9 @@ def build_impact_section(
             # a=微调前、b=微调后，compare() 给的是 (前-后)，这里翻转成 (后-前)
             imp = impact_delta(cmp)
             judge = degradation_label(imp["delta"], cmp["p_mcnemar"], alpha)
-            deltas.append(imp["delta"])
+            if imp["delta"] is not None:
+                deltas.append(imp["delta"])
+                delta_w.append(float(weights.get(t) or 0.0) if weights else 1.0)
             if "退化" in judge:
                 degraded.append(t)
             elif "提升" in judge:
@@ -214,8 +221,10 @@ def build_impact_section(
         )
         body.append("")
         if deltas:
-            avg = sum(deltas) / len(deltas)
-            body.append(f"- 宏平均变化：**{avg * 100:+.2f} pt**（跨 {len(deltas)} 个任务等权平均）")
+            wsum = sum(delta_w)
+            avg = (sum(d * w for d, w in zip(deltas, delta_w)) / wsum) if wsum > 0 else 0.0
+            avg_kind = "按综合分权重加权" if weights else "等权平均"
+            body.append(f"- 宏平均变化：**{avg * 100:+.2f} pt**（跨 {len(deltas)} 个任务{avg_kind}）")
             body.append(f"- 显著退化任务：{('、'.join(degraded)) if degraded else '无'}")
             body.append(f"- 显著提升任务：{('、'.join(improved)) if improved else '无'}")
             body.append("")
@@ -274,18 +283,175 @@ def model_order(summary: Dict[str, Any]) -> List[str]:
     return list((summary.get("results") or {}).keys())
 
 
-def macro_scores(summary: Dict[str, Any], tasks: Sequence[str]) -> List[Dict[str, Any]]:
-    """宏平均：只对实际跑过的任务取等权平均，并在报告中显式披露覆盖数。"""
+# --------------------------------------------------------------------------- #
+# 综合分权重
+#
+# 默认与历史行为一致：所有任务等权（weight = 1.0）。只有配置里出现
+# dimension_weights，或任务条目上写了 dimension / weight，才切换到加权口径，
+# 避免悄悄改变已有结论的排序。
+# --------------------------------------------------------------------------- #
+def _run_config(summary: Dict[str, Any]) -> Dict[str, Any]:
+    """取运行目录里落盘的完整配置 run_dir/config.json。
+
+    runner 在 _write_manifest 中把 cfg 原样写进了 run 目录，所以任务条目上的
+    dimension / weight 能原样读回；merge-runs 重建的目录也会补写一份。
+    """
+    run_dir = summary.get("run_dir")
+    if not run_dir:
+        return {}
+    return read_json(os.path.join(run_dir, "config.json"), default={}) or {}
+
+
+def _task_name_map(summary: Dict[str, Any]) -> Dict[str, str]:
+    """task_key（含 tag）→ task_name（数据集名），供 --weights 用数据集名命中。"""
+    out: Dict[str, str] = {}
+    for per_task in (summary.get("results") or {}).values():
+        for k, agg in per_task.items():
+            name = agg.get("task_name")
+            if name:
+                out.setdefault(str(k), str(name))
+    return out
+
+
+def task_weight_plan(
+    summary: Dict[str, Any],
+    tasks: Sequence[str],
+    override: Optional[Dict[str, float]] = None,
+) -> Dict[str, Any]:
+    """解析各任务的综合分权重。
+
+    优先级：命令行 override > 任务条目 weight > 维度权重（同维度内平分）> 等权 1.0。
+    任务条目的 dimension 显式写 null 表示「只做专项诊断，不计入综合分」（权重 0）。
+
+    返回 {"weights", "dimensions", "dimension_weights", "weighted"}；
+    weighted=False 表示本次仍是等权口径。
+    """
+    cfg = _run_config(summary)
+    dim_weights: Dict[str, float] = {}
+    for k, v in (cfg.get("dimension_weights") or {}).items():
+        try:
+            dim_weights[str(k)] = float(v)
+        except (TypeError, ValueError):
+            continue
+
+    specs = list(cfg.get("tasks") or []) or list((summary.get("manifest") or {}).get("tasks") or [])
+
+    dim_of: Dict[str, Optional[str]] = {}
+    explicit: Dict[str, float] = {}
+    null_dim: set = set()
+    for ts in specs:
+        if not isinstance(ts, dict):
+            continue
+        key = ts.get("tag") or ts.get("name")
+        if not key:
+            continue
+        key = str(key)
+        if "dimension" in ts:
+            d = ts.get("dimension")
+            dim_of[key] = None if d is None else str(d)
+            if d is None:
+                null_dim.add(key)
+        if ts.get("weight") is not None:
+            try:
+                explicit[key] = float(ts["weight"])
+            except (TypeError, ValueError):
+                pass
+
+    raw: Dict[str, float] = {}
+    for t in tasks:
+        if t in explicit:
+            raw[t] = explicit[t]
+        elif t in null_dim:
+            raw[t] = 0.0
+        else:
+            raw[t] = 1.0
+
+    # 维度权重：同维度内的多个任务平分该维度份额（已显式指定 weight 的任务除外）
+    if dim_weights:
+        groups: Dict[str, List[str]] = {}
+        for t in tasks:
+            d = dim_of.get(t)
+            if d and d in dim_weights and t not in explicit:
+                groups.setdefault(d, []).append(t)
+        for d, members in groups.items():
+            share = float(dim_weights[d]) / len(members)
+            for t in members:
+                raw[t] = share
+
+    # 命令行覆盖：先按维度名命中，再按 task_key 命中，最后按 task_name 命中
+    name_map = _task_name_map(summary)
+    for key, w in (override or {}).items():
+        try:
+            val = float(w)
+        except (TypeError, ValueError):
+            continue
+        members = [t for t in tasks if dim_of.get(t) == key and t not in explicit]
+        if members:
+            share = val / len(members)
+            for t in members:
+                raw[t] = share
+            continue
+        if key in raw:
+            raw[key] = val
+            continue
+        for t in tasks:
+            if name_map.get(t) == key:
+                raw[t] = val
+
+    weighted = bool(dim_weights) or bool(explicit) or bool(override) or bool(null_dim)
+    return {
+        "weights": raw,
+        "dimensions": dim_of,
+        "dimension_weights": dim_weights,
+        "weighted": weighted,
+    }
+
+
+def weight_table_rows(plan: Dict[str, Any], tasks: Sequence[str]) -> List[List[str]]:
+    """报告里披露的权重明细：任务 / 维度 / 权重，末尾带合计。"""
+    ws = plan.get("weights") or {}
+    dims = plan.get("dimensions") or {}
+    rows: List[List[str]] = []
+    total = 0.0
+    for t in tasks:
+        w = float(ws.get(t) or 0.0)
+        total += w
+        rows.append([t, dims.get(t) or "—", f"{w * 100:.1f}%"])
+    rows.append(["**合计**", "", f"**{total * 100:.1f}%**"])
+    return rows
+
+
+def macro_scores(
+    summary: Dict[str, Any],
+    tasks: Sequence[str],
+    weights: Optional[Dict[str, float]] = None,
+) -> List[Dict[str, Any]]:
+    """综合分：按权重归一化加权平均；weights 为空时退化为等权平均。
+
+    归一化只在「该模型实际跑过且权重 > 0」的任务之间进行 —— 没跑的任务不会按
+    0 分计入，否则会凭空拉低综合分（那等于把「没测」当成「不及格」）。
+    """
     out = []
     for mid, per_task in (summary.get("results") or {}).items():
-        scores = [per_task[t]["score"] for t in tasks if per_task.get(t, {}).get("score") is not None]
+        scored = [(t, per_task[t]["score"]) for t in tasks if per_task.get(t, {}).get("score") is not None]
         lat = [per_task[t]["latency_ms"]["p50"] for t in tasks if per_task.get(t, {}).get("latency_ms", {}).get("p50")]
+        if weights:
+            wmap = [(t, s, float(weights.get(t) or 0.0)) for t, s in scored]
+            wsum = sum(w for _, _, w in wmap)
+            score = (sum(s * w for _, s, w in wmap) / wsum) if wsum > 0 else None
+            n_tasks = sum(1 for _, _, w in wmap if w > 0)
+        else:
+            wmap = [(t, s, 1.0) for t, s in scored]
+            wsum = float(len(scored))
+            score = (sum(s for _, s in scored) / len(scored)) if scored else None
+            n_tasks = len(scored)
         out.append(
             {
                 "model": mid,
                 "label": (summary.get("model_labels") or {}).get(mid, mid),
-                "macro_score": (sum(scores) / len(scores)) if scores else None,
-                "n_tasks": len(scores),
+                "macro_score": score,
+                "n_tasks": n_tasks,
+                "weight_covered": wsum,
                 "p50_latency": sorted(lat)[len(lat) // 2] if lat else None,
                 "p95_latency": max(
                     (per_task[t]["latency_ms"]["p95"] or 0) for t in tasks if per_task.get(t, {}).get("latency_ms")
@@ -461,7 +627,14 @@ def svg_latency_bars(rows: Sequence[Dict[str, Any]], *, width: int = 900) -> str
 # --------------------------------------------------------------------------- #
 # Markdown 报告
 # --------------------------------------------------------------------------- #
-def build_markdown(summary: Dict[str, Any], *, baseline: Optional[str] = None, pairs: Optional[List[List[str]]] = None) -> str:
+def build_markdown(
+    summary: Dict[str, Any],
+    *,
+    baseline: Optional[str] = None,
+    pairs: Optional[List[List[str]]] = None,
+    weights: Optional[Dict[str, float]] = None,
+    weight_plan: Optional[Dict[str, Any]] = None,
+) -> str:
     run_dir = summary["run_dir"]
     labels = summary.get("model_labels") or {}
     tasks = available_tasks(summary)
@@ -506,8 +679,9 @@ def build_markdown(summary: Dict[str, Any], *, baseline: Optional[str] = None, p
     L.append(md_table(["模型"] + tasks, rows, ["l"] + ["r"] * len(tasks)))
     L.append("")
 
-    # 2. 宏平均 + 时延
-    macro = macro_scores(summary, tasks)
+    # 2. 综合分 + 时延
+    macro = macro_scores(summary, tasks, weights)
+    score_col = "综合分（加权）" if weights else "宏平均准确率"
     L.append(f"## {nxt()}. 综合表现与时延")
     L.append("")
     rows = []
@@ -521,9 +695,28 @@ def build_markdown(summary: Dict[str, Any], *, baseline: Optional[str] = None, p
                 fmt_num(m["p95_latency"], 0),
             ]
         )
-    L.append(md_table(["模型", "宏平均准确率", "覆盖任务数", "时延 p50/ms", "时延 p95/ms"], rows, ["l", "r", "r", "r", "r"]))
+    L.append(md_table(["模型", score_col, "覆盖任务数", "时延 p50/ms", "时延 p95/ms"], rows, ["l", "r", "r", "r", "r"]))
     L.append("")
-    L.append("> 宏平均为等权平均，只统计该模型实际运行过的任务；未跑全的任务不要与其他模型直接比较宏平均。")
+
+    if weights and weight_plan and weight_plan.get("weighted"):
+        L.append("**综合分权重**")
+        L.append("")
+        dims = weight_plan.get("dimension_weights") or {}
+        if dims:
+            L.append(
+                "维度权重："
+                + "、".join(f"{k} {float(v) * 100:.0f}%" for k, v in sorted(dims.items()))
+                + "（同维度内多任务平分）"
+            )
+            L.append("")
+        L.append(md_table(["任务", "维度", "权重"], weight_table_rows(weight_plan, tasks), ["l", "l", "r"]))
+        L.append("")
+        L.append(
+            "> 综合分按「该模型实际跑过且权重 > 0 的任务」重新归一化；"
+            "没跑的任务不会按 0 分计入。覆盖任务数不同的模型之间不要直接比较综合分。"
+        )
+    else:
+        L.append("> 宏平均为等权平均，只统计该模型实际运行过的任务；未跑全的任务不要与其他模型直接比较宏平均。")
     L.append("")
 
     # 3. 显著性
@@ -578,7 +771,7 @@ def build_markdown(summary: Dict[str, Any], *, baseline: Optional[str] = None, p
     # 4. 微调影响评估（阶段 1.5 的核心产出）
     #    注意 nxt() 只在真正输出章节时调用，否则单模型运行时章节号会跳号
     if pairs:
-        impact = build_impact_section(summary, pairs, tasks)
+        impact = build_impact_section(summary, pairs, tasks, weights=weights)
         if impact:
             L.append(f"## {nxt()}. 微调影响评估：通用能力代价（微调前 / 微调后）")
             L.append("")
@@ -759,6 +952,8 @@ def build_html(
     *,
     baseline: Optional[str] = None,
     pairs: Optional[List[List[str]]] = None,
+    weights: Optional[Dict[str, float]] = None,
+    weight_plan: Optional[Dict[str, Any]] = None,
 ) -> str:
     run_dir = summary["run_dir"]
     labels = summary.get("model_labels") or {}
@@ -775,8 +970,9 @@ def build_html(
         chart_series.append({"label": labels.get(mid, mid), "values": vals, "color": PALETTE[i % len(PALETTE)]})
 
     bar_svg = svg_grouped_bars(tasks, chart_series)
-    macro = macro_scores(summary, tasks)
+    macro = macro_scores(summary, tasks, weights)
     pareto_svg = svg_pareto(macro)
+    score_col_html = "综合分（加权）" if weights else "宏平均"
 
     latency_rows = []
     for t in tasks:
@@ -894,6 +1090,7 @@ def build_html(
         rows_html: List[str] = []
         warn_html: List[str] = []
         deltas: List[float] = []
+        delta_w: List[float] = []
         n_deg = n_imp = 0
         for t in tasks:
             aa = ((summary.get("results") or {}).get(a) or {}).get(t) or {}
@@ -907,7 +1104,9 @@ def build_html(
                 warn_html.append(f"⚠️ {html.escape(t)}：{html.escape(w)}")
             imp = impact_delta(cmp)
             judge = degradation_label(imp["delta"], cmp["p_mcnemar"])
-            deltas.append(imp["delta"])
+            if imp["delta"] is not None:
+                deltas.append(imp["delta"])
+                delta_w.append(float(weights.get(t) or 0.0) if weights else 1.0)
             if "退化" in judge:
                 n_deg += 1
             elif "提升" in judge:
@@ -924,12 +1123,14 @@ def build_html(
             )
         if not rows_html:
             continue
-        avg = (sum(deltas) / len(deltas) * 100) if deltas else 0.0
+        wsum = sum(delta_w)
+        avg = (sum(d * w for d, w in zip(deltas, delta_w)) / wsum * 100) if wsum > 0 else 0.0
+        avg_kind = "按综合分权重加权" if weights else "等权平均"
         impact_blocks.append(
             f"<h3>{html.escape(labels.get(a, a))} → {html.escape(labels.get(b, b))}</h3>"
             + (''.join(f'<div class="note">{w}</div>' for w in warn_html) if warn_html else '')
             + f"""<div class="grid">
-<div class="kpi"><div class="k">宏平均变化</div><div class="v {'worse' if avg < 0 else ('better' if avg > 0 else '')}">{avg:+.2f} pt</div><div class="k">跨 {len(deltas)} 个任务等权平均</div></div>
+<div class="kpi"><div class="k">宏平均变化</div><div class="v {'worse' if avg < 0 else ('better' if avg > 0 else '')}">{avg:+.2f} pt</div><div class="k">跨 {len(deltas)} 个任务{avg_kind}</div></div>
 <div class="kpi"><div class="k">显著退化任务</div><div class="v worse">{n_deg}</div><div class="k">p &lt; 0.05 且为负</div></div>
 <div class="kpi"><div class="k">显著提升任务</div><div class="v better">{n_imp}</div><div class="k">p &lt; 0.05 且为正</div></div>
 </div>
@@ -949,6 +1150,41 @@ def build_html(
         if impact_blocks
         else ""
     )
+
+    if weights and weight_plan and weight_plan.get("weighted"):
+        dims_html = ""
+        dims = weight_plan.get("dimension_weights") or {}
+        if dims:
+            dims_html = (
+                "<p>维度权重："
+                + "、".join(
+                    f"{html.escape(str(k))} {float(v) * 100:.0f}%" for k, v in sorted(dims.items())
+                )
+                + "（同维度内多任务平分）</p>"
+            )
+        w_rows = []
+        for r in weight_table_rows(weight_plan, tasks):
+            w_rows.append(
+                "<tr>"
+                f'<td class="rowh">{html.escape(str(r[0])).replace("**", "")}</td>'
+                f"<td>{html.escape(str(r[1]))}</td>"
+                f'<td class="num">{html.escape(str(r[2])).replace("**", "")}</td>'
+                "</tr>"
+            )
+        weight_html = (
+            dims_html
+            + '<div class="card"><table><thead><tr><th class="rowh">任务</th><th>维度</th>'
+            '<th class="num">权重</th></tr></thead><tbody>'
+            + "".join(w_rows)
+            + "</tbody></table></div>"
+            + '<div class="note">综合分按「该模型实际跑过且权重 &gt; 0 的任务」重新归一化；'
+            "没跑的任务不会按 0 分计入。覆盖任务数不同的模型之间不要直接比较综合分。</div>"
+        )
+    else:
+        weight_html = (
+            '<p>宏平均为等权平均，只统计该模型实际运行过的任务；'
+            "未跑全的任务不要与其他模型直接比较宏平均。</p>"
+        )
 
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -1005,8 +1241,9 @@ pre{{background:#F1EFE8;border:1px solid var(--line);border-radius:8px;padding:1
 
 <h2>2 · 综合表现与时延</h2>
 <div class="grid">
-{''.join(f'<div class="kpi"><div class="k">{html.escape(m["label"])}</div><div class="v">{fmt_pct(m["macro_score"],1)}</div><div class="k">宏平均 · 覆盖 {m["n_tasks"]} 个任务</div><div class="k">p50 {fmt_num(m["p50_latency"],0)} ms · p95 {fmt_num(m["p95_latency"],0)} ms</div></div>' for m in macro)}
+{''.join(f'<div class="kpi"><div class="k">{html.escape(m["label"])}</div><div class="v">{fmt_pct(m["macro_score"],1)}</div><div class="k">{score_col_html} · 覆盖 {m["n_tasks"]} 个任务</div><div class="k">p50 {fmt_num(m["p50_latency"],0)} ms · p95 {fmt_num(m["p95_latency"],0)} ms</div></div>' for m in macro)}
 </div>
+{weight_html}
 <div class="card">{pareto_svg}</div>
 <p>帕累托图：越靠左上越优（更准且更快）。如果一个小模型明显位于 32B 的左上侧，它就是这个场景下的性价比拐点。</p>
 <div class="card">{latency_svg}</div>
@@ -1047,10 +1284,19 @@ def build_report(
     *,
     baseline: Optional[str] = None,
     pairs: Optional[List[List[str]]] = None,
+    weights: Optional[Dict[str, float]] = None,
 ) -> Dict[str, str]:
+    """根据已有结果生成报告。
+
+    weights 为命令行传来的 {key: weight} 覆盖项，key 可以是维度名、task_key（tag）
+    或数据集名。它只改变综合分口径，不触碰任何逐样本结果 —— 因此改权重不需要重跑。
+    """
     summary = load_run(run_dir)
-    md_text = build_markdown(summary, baseline=baseline, pairs=pairs)
-    html_text = build_html(summary, md_text, baseline=baseline, pairs=pairs)
+    tasks = available_tasks(summary)
+    plan = task_weight_plan(summary, tasks, override=weights)
+    effective = plan["weights"] if plan.get("weighted") else None
+    md_text = build_markdown(summary, baseline=baseline, pairs=pairs, weights=effective, weight_plan=plan)
+    html_text = build_html(summary, md_text, baseline=baseline, pairs=pairs, weights=effective, weight_plan=plan)
     md_path = os.path.join(run_dir, "report.md")
     html_path = os.path.join(run_dir, "report.html")
     with open(md_path, "w", encoding="utf-8") as f:
